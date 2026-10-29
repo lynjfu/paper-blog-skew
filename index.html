@@ -189,8 +189,9 @@ a{color:var(--accent)}
 .topbar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding:.5rem 0 0;position:-webkit-sticky}
 .topbar .row{position:relative;padding-right:13rem}
 .topbar .howbtn{top:-.1rem;padding:.4rem .8rem;font-size:.85rem}
-.topbar .cite a{color:inherit;text-decoration:underline;text-decoration-color:var(--rule)}
-.topbar .cite a:hover{color:var(--accent)}
+.topbar .srcline{flex-basis:100%;margin:0;font-size:.95rem;line-height:1.35}
+.topbar .srcline .lb{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:inline-block;width:3.2rem}
+.topbar .srcline a{color:var(--accent);font-weight:600;text-decoration:none}.topbar .srcline a:hover{text-decoration:underline}
 @media (max-width:720px){.topbar .row{padding-right:0}}
 .topbar .row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem 1.2rem}
 .topbar .back{font-size:.85rem;text-decoration:none}
@@ -293,7 +294,7 @@ table.qlist tr.off td{opacity:.45}
 #sk2-svg .bnode.k-imp rect{fill:none}
 /* side column: never let flex shrink the detail panel below its content */
 .scol > *{flex:none}
-.topbar .cite{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 .qdetail details{margin:.3rem 0}.qdetail summary{cursor:pointer;font-weight:600;font-size:.88rem}
 /* ---- rebuilt-document viewer ---- */
 .docv{padding:.8rem 1.2rem;font-family:var(--serif);font-size:.95rem;line-height:1.5}
@@ -474,11 +475,11 @@ function model(P){
 // ======================================================================
 function DocViewer(doc, opts){
   opts=opts||{}; var root=h('div','viewer'), tools=h('div','vtools'), scroll=h('div','vscroll docv'), macros=(doc&&doc.macros)||{};
-  tools.innerHTML=(opts.link&&opts.link.url?'<a class="vlink" href="'+esc(opts.link.url)+'" target="_blank" rel="noopener">'+esc(opts.link.label||'Open the original')+' ↗</a>':'')+'<label class="vmode"><input type="checkbox" class="only" checked> only the matching passages</label><span class="vinfo"></span>'+
+  tools.innerHTML='<span class="vinfo"></span>'+
     (opts.key!==false?'<span class="vkey"><span class="k-eq">'+esc(opts.keyEq||'numbered equation (solid rule)')+'</span><span class="k-pr">'+esc(opts.keyPr||'coded sentence (dashed rule, marked text)')+'</span><span class="k-foc">'+esc(opts.keyFoc||'selected witness (black ring)')+'</span>'+(opts.keyMn===false?'':'<span class="k-mn">'+esc(opts.keyMn||'name mention (dotted rule, dotted underline)')+'</span>')+'</span>':'');
   root.appendChild(tools); root.appendChild(scroll);
   var BL={}, order=[];
-  if(opts.iframe){ var note=h('p','muted small'); note.innerHTML='Shown from <a href="'+esc(opts.iframe)+'" target="_blank" rel="noopener">'+esc(opts.iframe)+'</a>. If it stays blank, the site does not allow embedding: use the link to open it in a new tab.'; scroll.appendChild(note); var f=document.createElement('iframe'); f.src=opts.iframe; f.title=opts.title||'document'; scroll.appendChild(f); tools.querySelector('.vmode').remove(); if(tools.querySelector('.vkey')) tools.querySelector('.vkey').remove(); }
+  if(opts.iframe){ var note=h('p','muted small'); note.innerHTML='Shown from <a href="'+esc(opts.iframe)+'" target="_blank" rel="noopener">'+esc(opts.iframe)+'</a>. If it stays blank, the site does not allow embedding: use the link to open it in a new tab.'; scroll.appendChild(note); var f=document.createElement('iframe'); f.src=opts.iframe; f.title=opts.title||'document'; scroll.appendChild(f); if(tools.querySelector('.vkey')) tools.querySelector('.vkey').remove(); }
   else if(doc){
     var box=null, boxEnv=null;
     doc.blocks.forEach(function(b,i){
@@ -509,7 +510,7 @@ function DocViewer(doc, opts){
   var lastHits=null;
   function focus(hits){ clear(); lastHits=hits; var ids=order.filter(function(id){ return hits[id]; }); if(!ids.length) return;
     ids.forEach(function(id){ var x=BL[id]; applyMarks(x, hits[id]); x.el.classList.add('hit'); hits[id].forEach(function(hh){ x.el.classList.add('hit-'+hh.cls); if(hh.foc) x.el.classList.add('hit-foc'); }); });
-    hitsInfo(ids.length); if(tools.querySelector('.only').checked) collapse(); goTo(ids[0]); }
+    hitsInfo(ids.length); collapse(); goTo(ids[0]); }
   function collapse(){ scroll.classList.add('focused'); var run=[];
     function flush(){ if(!run.length) return; var first=BL[run[0]], last=BL[run[run.length-1]]; var pill=h('button','pill'); pill.type='button'; var a=first.b.sec||'', b=last.b.sec||'';
       pill.textContent='⋯ '+run.length+' block'+(run.length===1?'':'s')+' hidden'+(a?' ('+(a===b?'§'+a:'§'+a+' – §'+b)+')':'')+' · show'; var ids=run.slice();
@@ -521,7 +522,6 @@ function DocViewer(doc, opts){
   function goTo(id){ var x=BL[id]; if(!x) return;
     if(x.el.classList.contains('hid')){ x.el.classList.remove('hid'); x.el.classList.add('peek'); var bx=x.el.closest('.envbox'); if(bx) bx.classList.remove('hid'); }   // a passage outside the current subset: reveal it, marked
     var top=x.el.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop-40; scroll.scrollTo({top:top, behavior:'smooth'}); }
-  var only=tools.querySelector('.only'); if(only) only.addEventListener('change',function(){ if(!lastHits) return; if(only.checked){ expandAll(); collapse(); } else expandAll(); });
   scroll.addEventListener('click',function(e){ var a=e.target.closest('a.eqref'); if(a&&a.dataset.eq){ e.preventDefault(); var id=opts.eqIndex?opts.eqIndex[a.dataset.eq]:null; if(id) goTo(id); } });
   return {root:root, clear:clear, focus:focus, goTo:goTo, has:function(id){ return !!BL[id]; }};
 }
@@ -578,7 +578,7 @@ function wireOcc(M, node, viewer){ node.addEventListener('click',function(e){ va
 // ======================================================================
 function buildPaperTab(M, ctx){
   var P=M.P, root=h('div');
-  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.paper,title:'paper',link:{url:P.paper.url,label:'Open the paper'}}):DocViewer(P.docs.paper,{eqIndex:M.A.paper.eq,link:{url:P.paper.url,label:'Open the paper'}});
+  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.paper,title:'paper'}):DocViewer(P.docs.paper,{eqIndex:M.A.paper.eq});
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The paper is rebuilt below so it can be read, but no quantities, equations or sentences have been coded for it under the rules at the bottom. The Trotter pair shows what a coded pair looks like.'));
     var split0=h('div','split'); split0.appendChild(h('div','vcol')).appendChild(viewer.root); split0.appendChild(h('div','scol','<div class="qdetail"><h4>Named quantities</h4><p class="muted">none coded</p></div>')); root.appendChild(split0); root.appendChild(rulesPaper()); return {root:root, refresh:function(){}}; }
   var split=h('div','split'), vcol=h('div','vcol'), scol=h('div','scol');
@@ -639,7 +639,7 @@ function rulesPaper(){ return h('div','rules','<h3>Rules used to extract the pap
 // ======================================================================
 function buildBlogTab(M, ctx){
   var P=M.P, root=h('div');
-  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.blog,title:'blog',link:{url:P.blog.url,label:'Open the blog'}}):DocViewer(P.docs.blog,{link:{url:P.blog.url,label:'Open the blog'}, keyEq:'concept’s own sentence (solid rule)', keyPr:'sentence carrying one of its edges (dashed rule)', keyFoc:'selected edge (black ring)', keyMn:false});
+  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.blog,title:'blog'}):DocViewer(P.docs.blog,{keyEq:'concept’s own sentence (solid rule)', keyPr:'sentence carrying one of its edges (dashed rule)', keyFoc:'selected edge (black ring)', keyMn:false});
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The blog text is rebuilt below so it can be read; no concepts or edges have been coded for it.'));
     var split0=h('div','split'); split0.appendChild(h('div','vcol')).appendChild(viewer.root); split0.appendChild(h('div','scol','<div class="qdetail"><h4>Blog concepts</h4><p class="muted">none coded</p></div>')); root.appendChild(split0); root.appendChild(rulesBlog()); return {root:root, refresh:function(){}}; }
   var split=h('div','split'), vcol=h('div','vcol'), scol=h('div','scol');
@@ -691,7 +691,7 @@ function rulesBlog(){ return h('div','rules','<h3>Rules used to extract the blog
 function buildMapTab(M, ctx){
   var P=M.P, root=h('div');
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The map needs both sides coded.')); root.appendChild(rulesMap()); return {root:root, refresh:function(){}}; }
-  root.innerHTML='<p class="maplinks">'+(P.paper.url?'<a href="'+esc(P.paper.url)+'" target="_blank" rel="noopener">Open the paper ↗</a>':'')+(P.blog.url?' <a href="'+esc(P.blog.url)+'" target="_blank" rel="noopener">Open the blog ↗</a>':'')+'</p><div class="mapctl"><label>arcs at rest: <select class="rest"><option value="mapped" selected>pairs between blog-visible quantities</option><option value="all">all paper pairs</option><option value="none">none</option></select></label><button type="button" class="clear">clear selection</button></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Concept-to-concept map between blog concepts and the paper’s named quantities"></svg></div><div class="qdetail s2-detail"><p class="muted">Click a blog concept, a paper quantity, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
+  root.innerHTML='<div class="mapctl"><label>arcs at rest: <select class="rest"><option value="mapped" selected>pairs between blog-visible quantities</option><option value="all">all paper pairs</option><option value="none">none</option></select></label><button type="button" class="clear">clear selection</button></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Concept-to-concept map between blog concepts and the paper’s named quantities"></svg></div><div class="qdetail s2-detail"><p class="muted">Click a blog concept, a paper quantity, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
     '<div class="sec"><h3>Ungrounded pairs (the blog asserts a dependence the paper never states)</h3><div class="s2-ung"></div></div><div class="sec"><h3>Prose scopes against the equation layer</h3><div class="s2-scopes"></div></div>';
   root.insertBefore(h('div','sec','<h3>Skew</h3><div class="s2-summary"></div>'), root.querySelector('.s2-detail').nextSibling);
   root.appendChild(rulesMap());
@@ -771,8 +771,9 @@ function rulesMap(){ return h('div','rules','<h3>Rules used to compute the skew<
 // APP SHELL
 // ======================================================================
 var app=document.getElementById('app'), VIEWS={};
+function srcLink(x){ var t=x.title||x.cite||x.url||''; return x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener" title="'+esc(x.cite||'')+'">'+esc(t)+' ↗</a>':esc(t); }
 function pairView(pid){ if(VIEWS[pid]) return VIEWS[pid]; var P=PAIRS[pid]; if(!P) return null; var sc=P.scopes||{}; SCOPENAME={abstract:'abstract', intro:'introduction', prelim:sc.prelim||'preliminaries', body:sc.body||'rest of the paper'}; var M=model(P); var root=h('div');
-  var top=h('div','topbar'); top.innerHTML='<div class="row"><a class="back" href="#/">← all pairs</a><span class="ttl">'+esc(pid)+'</span><span class="muted small" style="margin-right:.6rem">'+esc(P.short||'')+'</span><span class="badge '+esc(P.status)+'">'+esc(P.status)+'</span><a class="howbtn" href="method.html">How this was made</a><p class="cite" title="'+esc(P.paper.cite+' — '+P.blog.cite)+'">Paper: '+(P.paper.url?'<a href="'+esc(P.paper.url)+'" target="_blank" rel="noopener">'+esc(P.paper.cite)+'</a>':esc(P.paper.cite))+' &nbsp;·&nbsp; Blog: '+(P.blog.url?'<a href="'+esc(P.blog.url)+'" target="_blank" rel="noopener">'+esc(P.blog.cite)+'</a>':esc(P.blog.cite))+'</p></div>'+
+  var top=h('div','topbar'); top.innerHTML='<div class="row"><a class="back" href="#/">← all pairs</a><span class="ttl">'+esc(pid)+'</span><span class="muted small" style="margin-right:.6rem">'+esc(P.short||'')+'</span><span class="badge '+esc(P.status)+'">'+esc(P.status)+'</span><a class="howbtn" href="method.html">How this was made</a><p class="srcline"><span class="lb">Paper</span> '+srcLink(P.paper)+'</p><p class="srcline"><span class="lb">Blog</span> '+srcLink(P.blog)+'</p></div>'+
     '<div class="tabbar" role="tablist"><button role="tab" data-tab="paper">1 · Paper</button><button role="tab" data-tab="blog">2 · Blog</button><button role="tab" data-tab="map">3 · Map</button></div>';
   root.appendChild(top);
   var ctx={}; var tabs={}; var panels=h('div');
