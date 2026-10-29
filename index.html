@@ -542,6 +542,7 @@ function DocViewer(doc, opts){
   var api={root:root, clear:clear, focus:focus, goTo:goTo, has:function(id){ return !!BL[id]; }, onClear:null}; return api;
 }
 
+var MKLEG_PT='<div class="mklegend"><span class="mk mk-sym"></span>symbol metric &nbsp; <span class="mk mk-phr"></span>phrase metric</div>';
 var MKLEG_P='<div class="mklegend"><span class="mk mk-sym"></span>symbol metric &nbsp; <span class="mk mk-phr"></span>phrase metric &nbsp; <span class="mk mk-sym mk-orph"></span><span class="mk mk-phr mk-orph"></span>hollow = no blog concept maps to it</div>';
 var MKLEG_B='<div class="mklegend"><span class="mk mk-var"></span>filled circle = recovered and discerned (the blog’s word for a paper metric, and it sits in a measurement frame) &nbsp; <span class="mk mk-rec"></span>hollow circle = recovered only &nbsp; <span class="mk mk-dis"></span>hollow square = discerned only (in a frame; no paper metric)</div>';
 function lgLine(cls,label){ return '<span class="lgi"><svg width="44" height="12" viewBox="0 0 44 12" aria-hidden="true"><path class="'+cls+'" d="M2,6 L42,6"/></svg>'+label+'</span>'; }
@@ -599,7 +600,7 @@ function buildPaperTab(M, ctx){
     var split0=h('div','split'); split0.appendChild(h('div','vcol')).appendChild(viewer.root); split0.appendChild(h('div','scol','<div class="qdetail"><h4>Named metrics</h4><p class="muted">none coded</p></div>')); root.appendChild(split0); return {root:root, refresh:function(){}}; }
   var split=h('div','split'), vcol=h('div','vcol'), scol=h('div','scol');
   vcol.appendChild(srcHead(P.paper,'Paper')); vcol.appendChild(viewer.root); split.appendChild(vcol); split.appendChild(scol);
-  var list=h('table','qlist'); scol.appendChild(h('p','muted small','Click a metric to see its sources in the paper, whether an equation (e.g. <mark class="m-eq">F = ma</mark>) or prose (e.g. “<mark class="m-pr">force</mark> is dependent on…”), as well as the sources for its interdependencies. Click the metric again to fold it.')); scol.appendChild(h('div','',MKLEG_P));
+  var list=h('table','qlist'); scol.appendChild(h('p','muted small','Click a metric to see its sources in the paper, whether an equation (e.g. <mark class="m-eq">F = ma</mark>) or prose (e.g. “<mark class="m-pr">force</mark> is dependent on…”), as well as the sources for its interdependencies. Click the metric again to fold it.')); scol.appendChild(h('div','',MKLEG_PT));
   var mpanel=h('div','panel metrics'); mpanel.appendChild(list); scol.appendChild(mpanel); syncPane(vcol,scol,viewer);
   var xpanel=h('div','panel matrix'); xpanel.innerHTML='<h4>Interdependence table</h4><p class="muted small">Darker cell = more sources in the paper for the pair. Click a cell to collapse the paper to them.</p><div class="legend small"><span>not linked</span><span class="l1">1 source</span><span class="l4">many sources</span><span class="l3">selected</span></div><div class="mxwrap"><table class="mx" aria-label="Interdependence table"></table></div><p class="muted small mxcap">No pair selected.</p>'; scol.appendChild(xpanel); root.appendChild(split);
   var detailHTML='';
@@ -607,7 +608,7 @@ function buildPaperTab(M, ctx){
   var PL={}, sel=null, selPair=null;
   function occ(k){ var eqs=L.eq?M.REL.map(function(r,i){return i;}).filter(function(i){ return M.REL[i].vars.indexOf(k)>=0; }):[]; var prs=M.PR.map(function(l,i){return i;}).filter(function(i){ var l=M.PR[i]; return proseOn(l)&&(l.a===k||l.b===k); }); return {eq:eqs, pr:prs}; }
   function renderList(){ var s='<thead><tr><th rowspan="2">Metric</th><th rowspan="2">Paper’s names</th><th colspan="2" class="grp">Source</th></tr><tr><th>equation</th><th>prose</th></tr></thead><tbody>';
-    M.QORDER.forEach(function(k){ var q=M.QI[k], o=occ(k); var partners=Object.keys(PL).filter(function(x){ return x.split('|').indexOf(k)>=0; }).length; var mk='mk '+(q.kind==='phrase'?'mk-phr':'mk-sym')+(M.mapped[k]?'':' mk-orph');
+    M.QORDER.forEach(function(k){ var q=M.QI[k], o=occ(k); var partners=Object.keys(PL).filter(function(x){ return x.split('|').indexOf(k)>=0; }).length; var mk='mk '+(q.kind==='phrase'?'mk-phr':'mk-sym');
       s+='<tr class="clk'+(sel===k?' sel':'')+(o.eq.length+o.pr.length?'':' off')+'" data-k="'+esc(k)+'"><td><span class="'+mk+'"></span>'+M.tex(k)+'</td><td class="al">'+esc(q.aliases.join(' · '))+'</td><td class="num">'+o.eq.length+'</td><td class="num">'+o.pr.length+'</td></tr>';
       if(sel===k) s+='<tr class="exp"><td colspan="4"><div class="qdetail inline">'+detailHTML+'</div></td></tr>'; });
     keepRow(list, sel?'tr.clk[data-k="'+sel+'"]':null, function(){ list.innerHTML=s+'</tbody>'; ts(list); }); }
