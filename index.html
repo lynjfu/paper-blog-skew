@@ -201,12 +201,12 @@ table.mx tbody th{height:14px;line-height:14px;padding:0 .35rem 0 0;font-size:.6
 table.mx tbody th > span{display:inline-block;max-width:8.5rem;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
 table.mx td{width:14px;height:14px;min-width:14px;box-sizing:border-box;padding:0;line-height:14px;border-radius:2px;font-size:0}
 table.mx td.has.l1{background:#cfe3ee}table.mx td.has.l2{background:#9cc5db}table.mx td.has.l3{background:#5f9fc4}table.mx td.has.l4{background:#0072B2}
-table.mx td.sel,table.mx td.has.sel{background:#000}
+table.mx td.sel,table.mx td.has.sel{outline:2px solid var(--accent);outline-offset:0;z-index:1;position:relative}
 .scol .panel{border:1px solid var(--rule);border-radius:4px;background:var(--surface);overflow:auto;flex:1 1 auto;min-height:0}
 .scol .panel.metrics{padding:.6rem .7rem 0;display:flex;flex-direction:column}.scol .panel.metrics .listwrap{flex:1 1 auto;min-height:0;overflow:auto;margin:0 -.7rem;border-top:1px solid var(--rule)}.scol .panel.metrics table.qlist{border:none}
 .stabs{display:flex;gap:.2rem;border-bottom:1px solid var(--rule)}.stabs button{font:inherit;font-size:.9rem;font-weight:600;padding:.4rem .9rem;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}.stabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}.stabs button:hover{color:var(--fg)}
 .scol .panel.matrix{padding:.6rem .7rem;overflow:auto}.scol .panel.matrix .mxwrap{border:none;background:none;padding:0;margin:.3rem 0;overflow:auto}
-.legend.small{font-size:.75rem;gap:.7rem}.legend .l1::before{background:#cfe3ee}.legend .l4::before{background:#0072B2}.legend .l3::before{background:#000}
+.mxscale{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--muted);margin:.2rem 0 .4rem}.mxscale .bar{display:inline-block;width:9rem;height:.7rem;border-radius:3px;background:linear-gradient(to right,var(--cell),#cfe3ee,#9cc5db,#5f9fc4,#0072B2)}
 
 @media (max-width:720px){.topbar .row{padding-right:0}}
 .topbar .row{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem 1.2rem}
@@ -605,18 +605,18 @@ function buildPaperTab(M, ctx){
   vcol.appendChild(srcHead(P.paper,'Paper')); vcol.appendChild(viewer.root); split.appendChild(vcol); split.appendChild(scol);
   var list=h('table','qlist');
   var stabs=h('div','stabs'); stabs.setAttribute('role','tablist'); stabs.innerHTML='<button type="button" role="tab" data-st="metrics" aria-selected="true">Metrics</button><button type="button" role="tab" data-st="matrix" aria-selected="false">Interdependencies</button>'; scol.appendChild(stabs);
-  var mpanel=h('div','panel metrics'); mpanel.appendChild(h('p','muted small','Click a metric to see its sources in the paper, whether an equation (e.g. <mark class="m-eq">F = ma</mark>) or prose (e.g. “<mark class="m-pr">force</mark> is dependent on…”), as well as the sources for its interdependencies. Click the metric again to fold it.')); var mwrap=h('div','listwrap'); mwrap.appendChild(list); mpanel.appendChild(mwrap); scol.appendChild(mpanel);
-  var xpanel=h('div','panel matrix hidden'); xpanel.innerHTML='<p class="muted small">Darker cell = more sources in the paper for the pair. Click a cell to collapse the paper to them.</p><div class="legend small"><span>not linked</span><span class="l1">1 source</span><span class="l4">many sources</span><span class="l3">selected</span></div><div class="mxwrap"><table class="mx" aria-label="Interdependence table"></table></div><p class="muted small mxcap">No pair selected.</p>'; scol.appendChild(xpanel); root.appendChild(split);
+  var mpanel=h('div','panel metrics'); mpanel.appendChild(h('p','muted small','Click a metric to see its sources in the paper, whether an equation (e.g. <mark class="m-eq">F = ma</mark>) or prose (e.g. “<mark class="m-pr">force</mark> is dependent on…”). Click the metric again to fold it.')); var mwrap=h('div','listwrap'); mwrap.appendChild(list); mpanel.appendChild(mwrap); scol.appendChild(mpanel);
+  var xpanel=h('div','panel matrix hidden'); xpanel.innerHTML='<p class="muted small">Click an interaction between two metrics to see their sources in the paper.</p><div class="mxscale small"><span>no sources</span><span class="bar" aria-hidden="true"></span><span>many sources</span></div><div class="mxwrap"><table class="mx" aria-label="Interdependence table"></table></div>'; scol.appendChild(xpanel); root.appendChild(split);
   stabs.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; var t=b.dataset.st; Array.prototype.forEach.call(stabs.querySelectorAll('button'),function(x){ x.setAttribute('aria-selected',x.dataset.st===t?'true':'false'); }); mpanel.classList.toggle('hidden',t!=='metrics'); xpanel.classList.toggle('hidden',t!=='matrix'); });
   syncPane(vcol,scol,viewer); var detailHTML='';
-  var mx=xpanel.querySelector('table.mx'), mxcap=xpanel.querySelector('.mxcap');
+  var mx=xpanel.querySelector('table.mx');
   var PL={}, sel=null, selPair=null;
   function occ(k){ var eqs=L.eq?M.REL.map(function(r,i){return i;}).filter(function(i){ return M.REL[i].vars.indexOf(k)>=0; }):[]; var prs=M.PR.map(function(l,i){return i;}).filter(function(i){ var l=M.PR[i]; return proseOn(l)&&(l.a===k||l.b===k); }); return {eq:eqs, pr:prs}; }
   function renderList(){ var s='<thead><tr><th rowspan="2">Metric</th><th rowspan="2">Paper’s names</th><th colspan="2" class="grp">Source</th></tr><tr><th>equation</th><th>prose</th></tr></thead><tbody>';
     M.QORDER.forEach(function(k){ var q=M.QI[k], o=occ(k); var partners=Object.keys(PL).filter(function(x){ return x.split('|').indexOf(k)>=0; }).length; s+='<tr class="clk'+(sel===k?' sel':'')+(o.eq.length+o.pr.length?'':' off')+'" data-k="'+esc(k)+'"><td>'+M.tex(k)+'</td><td class="al">'+esc(q.aliases.join(' · '))+'</td><td class="num">'+o.eq.length+'</td><td class="num">'+o.pr.length+'</td></tr>';
       if(sel===k) s+='<tr class="exp"><td colspan="4"><div class="qdetail inline">'+detailHTML+'</div></td></tr>'; });
     keepRow(list, sel?'tr.clk[data-k="'+sel+'"]':null, function(){ list.innerHTML=s+'</tbody>'; ts(list); }); }
-  function clearSel(){ sel=null; selPair=null; detailHTML=''; viewer.clear(); renderList(); Array.prototype.forEach.call(mx.querySelectorAll('td.sel'),function(td){ td.classList.remove('sel'); }); mxcap.textContent='No pair selected.'; }
+  function clearSel(){ sel=null; selPair=null; detailHTML=''; viewer.clear(); renderList(); Array.prototype.forEach.call(mx.querySelectorAll('td.sel'),function(td){ td.classList.remove('sel'); }); }
   viewer.onClear=clearSel;
   function qHits(k){ var o=occ(k), hits={}; o.eq.forEach(function(ri){ M.REL[ri].nums.forEach(function(n){ eqHit(M,hits,n,'('+n+') '+M.REL[ri].id); }); leadHits(M,hits,ri,[k]); }); o.pr.forEach(function(pi){ prHit(M,hits,M.PR[pi]); }); return hits; }
   function showQ(k){ sel=k; selPair=null; var q=M.QI[k], o=occ(k);
@@ -643,7 +643,7 @@ function buildPaperTab(M, ctx){
     var s='<thead><tr><th></th>'+V.map(function(k){ return '<th scope="col" title="'+esc(M.lbl(k))+'"><span>'+M.tex(k)+'</span></th>'; }).join('')+'</tr></thead><tbody>';
     V.forEach(function(a){ s+='<tr><th scope="row" title="'+esc(M.lbl(a))+'"><span>'+M.tex(a)+'</span></th>'+V.map(function(b){ if(a===b) return '<td class="diag"></td>'; var x=PL[key(a,b)]; if(!x) return '<td></td>'; var n=cnt(x), lv=n<=1?1:(n<=3?2:(n<mx0/2?3:4)); return '<td class="has l'+lv+'" tabindex="0" role="button" data-a="'+a+'" data-b="'+b+'" title="'+esc(M.lbl(a)+' ↔ '+M.lbl(b)+': '+n+' source'+(n===1?'':'s'))+'" aria-label="'+n+' sources"></td>'; }).join('')+'</tr>'; });
     mx.innerHTML=s+'</tbody>'; ts(mx); }
-  mx.addEventListener('click',function(e){ var td=e.target.closest('td.has'); if(!td) return; var a=td.dataset.a, b=td.dataset.b; pairFocus(M,PL,viewer,a,b); var x=PL[key(a,b)]; mxcap.textContent=M.lbl(a)+' ↔ '+M.lbl(b)+': '+x.eq.length+' equation'+(x.eq.length===1?'':'s')+', '+x.pr.length+' sentence'+(x.pr.length===1?'':'s')+((x.dv||[]).length?', '+(x.dv||[]).length+' through a condition':'')+'. The paper is collapsed to them.';
+  mx.addEventListener('click',function(e){ var td=e.target.closest('td.has'); if(!td) return; var a=td.dataset.a, b=td.dataset.b; pairFocus(M,PL,viewer,a,b); 
     Array.prototype.forEach.call(mx.querySelectorAll('td.sel'),function(x){ x.classList.remove('sel'); }); Array.prototype.forEach.call(mx.querySelectorAll('td[data-a="'+a+'"][data-b="'+b+'"],td[data-a="'+b+'"][data-b="'+a+'"]'),function(x){ x.classList.add('sel'); }); });
   function refresh(){ PL=M.paperLayer(); renderList(); renderMatrix(); if(selPair) showPair(selPair[0],selPair[1]); else if(sel) showQ(sel); }
   refresh();
