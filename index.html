@@ -220,7 +220,8 @@ table.mx td.sel,table.mx td.has.sel{background:#000}
 .split{display:grid;grid-template-columns:minmax(0,3fr) minmax(320px,2fr);gap:1rem;margin-top:1rem;align-items:start}
 @media (max-width:900px){.split{grid-template-columns:1fr}}
 .viewer{background:var(--surface);border:1px solid var(--rule);border-radius:4px;display:flex;flex-direction:column;min-height:420px}
-.vtools{display:flex;gap:.4rem;align-items:center;padding:.35rem .6rem;border-bottom:1px solid var(--rule);font-size:.8rem;color:var(--muted)}
+.vtools{display:flex;gap:.4rem;align-items:center;justify-content:space-between;padding:.35rem .6rem;border-bottom:1px solid var(--rule);font-size:.8rem;color:var(--muted)}
+.vtools .vall{margin-left:auto;font:inherit;font-size:.78rem;font-weight:600;padding:.15rem .6rem;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:4px;cursor:pointer}.vtools .vall:hover{background:var(--accent);color:#fff}
 .vtools button{font:inherit;font-size:.8rem;padding:.1rem .5rem;border:1px solid var(--rule);background:var(--surface);color:var(--fg);border-radius:3px;cursor:pointer}
 .vtools .vkey{margin-left:auto;display:flex;gap:.8rem}
 .vtools .vkey span::before{content:"";display:inline-block;width:1rem;height:.7rem;vertical-align:-.1rem;margin-right:.3rem;box-sizing:border-box}
@@ -490,7 +491,8 @@ function model(P){
 // ======================================================================
 function DocViewer(doc, opts){
   opts=opts||{}; var root=h('div','viewer'), tools=h('div','vtools'), scroll=h('div','vscroll docv'), macros=(doc&&doc.macros)||{};
-  tools.innerHTML='<span class="vinfo"></span>'; tools.classList.add('hidden');
+  tools.innerHTML='<span class="vinfo"></span><button type="button" class="vall">Show all</button>'; tools.classList.add('hidden');
+  tools.querySelector('.vall').addEventListener('click',function(){ if(api.onClear) api.onClear(); else clear(); });
   root.appendChild(tools); root.appendChild(scroll);
   var BL={}, order=[];
   if(opts.iframe){ var note=h('p','muted small'); note.innerHTML='Shown from <a href="'+esc(opts.iframe)+'" target="_blank" rel="noopener">'+esc(opts.iframe)+'</a>. If it stays blank, the site does not allow embedding: use the link to open it in a new tab.'; scroll.appendChild(note); var f=document.createElement('iframe'); f.src=opts.iframe; f.title=opts.title||'document'; scroll.appendChild(f); }
@@ -537,7 +539,7 @@ function DocViewer(doc, opts){
     if(x.el.classList.contains('hid')){ x.el.classList.remove('hid'); x.el.classList.add('peek'); var bx=x.el.closest('.envbox'); if(bx) bx.classList.remove('hid'); }   // a passage outside the current subset: reveal it, marked
     var top=x.el.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop-40; scroll.scrollTo({top:top, behavior:'smooth'}); }
   scroll.addEventListener('click',function(e){ var a=e.target.closest('a.eqref'); if(a&&a.dataset.eq){ e.preventDefault(); var id=opts.eqIndex?opts.eqIndex[a.dataset.eq]:null; if(id) goTo(id); } });
-  return {root:root, clear:clear, focus:focus, goTo:goTo, has:function(id){ return !!BL[id]; }};
+  var api={root:root, clear:clear, focus:focus, goTo:goTo, has:function(id){ return !!BL[id]; }, onClear:null}; return api;
 }
 
 var MKLEG_P='<div class="mklegend"><span class="mk mk-sym"></span>symbol metric &nbsp; <span class="mk mk-phr"></span>phrase metric &nbsp; <span class="mk mk-sym mk-orph"></span><span class="mk mk-phr mk-orph"></span>hollow = no blog concept maps to it</div>';
@@ -609,7 +611,8 @@ function buildPaperTab(M, ctx){
       s+='<tr class="clk'+(sel===k?' sel':'')+(o.eq.length+o.pr.length?'':' off')+'" data-k="'+esc(k)+'"><td><span class="'+mk+'"></span>'+M.tex(k)+'</td><td class="al">'+esc(q.aliases.join(' · '))+'</td><td class="num">'+o.eq.length+'</td><td class="num">'+o.pr.length+'</td></tr>';
       if(sel===k) s+='<tr class="exp"><td colspan="4"><div class="qdetail inline">'+detailHTML+'</div></td></tr>'; });
     keepRow(list, sel?'tr.clk[data-k="'+sel+'"]':null, function(){ list.innerHTML=s+'</tbody>'; ts(list); }); }
-  function clearSel(){ sel=null; selPair=null; detailHTML=''; viewer.clear(); renderList(); Array.prototype.forEach.call(mx.querySelectorAll('td.sel'),function(td){ td.classList.remove('sel'); }); }
+  function clearSel(){ sel=null; selPair=null; detailHTML=''; viewer.clear(); renderList(); Array.prototype.forEach.call(mx.querySelectorAll('td.sel'),function(td){ td.classList.remove('sel'); }); mxcap.textContent='No pair selected.'; }
+  viewer.onClear=clearSel;
   function qHits(k){ var o=occ(k), hits={}; o.eq.forEach(function(ri){ M.REL[ri].nums.forEach(function(n){ eqHit(M,hits,n,'('+n+') '+M.REL[ri].id); }); }); o.pr.forEach(function(pi){ prHit(M,hits,M.PR[pi]); }); return hits; }
   function showQ(k){ sel=k; selPair=null; var q=M.QI[k], o=occ(k);
     var hits=qHits(k); viewer.focus(hits);
@@ -671,6 +674,7 @@ function buildBlogTab(M, ctx){
       if(sel===b.id) s+='<tr class="exp"><td colspan="3"><div class="qdetail inline">'+detailHTML+'</div></td></tr>'; });
     keepRow(list, sel?'tr.clk[data-b="'+sel+'"]':null, function(){ list.innerHTML=s+'</tbody>'; ts(list); }); }
   function clearSel(){ sel=null; detailHTML=''; viewer.clear(); detail.classList.add('hidden'); renderList(); Array.prototype.forEach.call(tb.querySelectorAll('tr.sel'),function(x){ x.classList.remove('sel'); }); }
+  viewer.onClear=clearSel;
   function renderEdges(){ tb.innerHTML=M.E.map(function(e,i){ var r=M.edgeRatio(i,PL); var pct=r.grey?null:(r.pairs.length?r.linked.length/r.pairs.length:0);
     return '<tr class="clk" data-e="'+i+'"><td>'+esc(M.BI[e.source].label+' → '+M.BI[e.target].label)+'</td><td>'+esc(TYPENAME[e.type]||e.type)+'</td><td>'+(r.grey?'—':r.pairs.map(function(k){ var ab=k.split('|'); return M.tex(ab[0])+'↔'+M.tex(ab[1])+(PL[k]?' ✓':' ✗'); }).join('; '))+'</td><td>'+(r.grey?'no check':'<span class="grat"><i style="width:'+Math.round(pct*100)+'%"></i></span>'+r.linked.length+'/'+r.pairs.length)+'</td></tr>'; }).join(''); ts(tb); }
   function showB(id){ sel=id; detail.classList.add('hidden'); var b=M.BI[id]; var hits={}; blogHitAll(M,hits,b,'eq',b.label,true);
