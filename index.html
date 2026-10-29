@@ -322,6 +322,8 @@ table.qlist tr.off td{opacity:.45}
 .docv mark.m-foc{box-shadow:0 0 0 1.5px #000}
 .docv .pill{display:block;width:100%;text-align:left;font:inherit;font-family:var(--sans);font-size:.78rem;color:var(--muted);background:var(--cell);border:1px dashed var(--rule);border-radius:3px;padding:.2rem .6rem;margin:.4rem 0;cursor:pointer}
 .docv .pill:hover{color:var(--fg);border-color:var(--fg)}
+.vtools .vlink{font-weight:600;color:var(--accent);text-decoration:none;margin-right:.6rem;white-space:nowrap}.vtools .vlink:hover{text-decoration:underline}
+.maplinks{margin:.6rem 0 0;font-size:.9rem}.maplinks a{font-weight:600;color:var(--accent);text-decoration:none;margin-right:1.2rem}.maplinks a:hover{text-decoration:underline}
 .vtools .vmode{font-size:.8rem}.vtools .vinfo{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
 .vtools .vkey .k-eq::before{border:none;border-left:3px solid #0072B2;background:rgba(0,114,178,.15)}
 .vtools .vkey .k-pr::before{border:none;border-left:3px dashed #D55E00;background:rgba(213,94,0,.12)}
@@ -472,7 +474,7 @@ function model(P){
 // ======================================================================
 function DocViewer(doc, opts){
   opts=opts||{}; var root=h('div','viewer'), tools=h('div','vtools'), scroll=h('div','vscroll docv'), macros=(doc&&doc.macros)||{};
-  tools.innerHTML='<label class="vmode"><input type="checkbox" class="only" checked> only the matching passages</label><span class="vinfo"></span>'+
+  tools.innerHTML=(opts.link&&opts.link.url?'<a class="vlink" href="'+esc(opts.link.url)+'" target="_blank" rel="noopener">'+esc(opts.link.label||'Open the original')+' ↗</a>':'')+'<label class="vmode"><input type="checkbox" class="only" checked> only the matching passages</label><span class="vinfo"></span>'+
     (opts.key!==false?'<span class="vkey"><span class="k-eq">'+esc(opts.keyEq||'numbered equation (solid rule)')+'</span><span class="k-pr">'+esc(opts.keyPr||'coded sentence (dashed rule, marked text)')+'</span><span class="k-foc">'+esc(opts.keyFoc||'selected witness (black ring)')+'</span>'+(opts.keyMn===false?'':'<span class="k-mn">'+esc(opts.keyMn||'name mention (dotted rule, dotted underline)')+'</span>')+'</span>':'');
   root.appendChild(tools); root.appendChild(scroll);
   var BL={}, order=[];
@@ -576,7 +578,7 @@ function wireOcc(M, node, viewer){ node.addEventListener('click',function(e){ va
 // ======================================================================
 function buildPaperTab(M, ctx){
   var P=M.P, root=h('div');
-  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.paper,title:'paper'}):DocViewer(P.docs.paper,{eqIndex:M.A.paper.eq});
+  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.paper,title:'paper',link:{url:P.paper.url,label:'Open the paper'}}):DocViewer(P.docs.paper,{eqIndex:M.A.paper.eq,link:{url:P.paper.url,label:'Open the paper'}});
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The paper is rebuilt below so it can be read, but no quantities, equations or sentences have been coded for it under the rules at the bottom. The Trotter pair shows what a coded pair looks like.'));
     var split0=h('div','split'); split0.appendChild(h('div','vcol')).appendChild(viewer.root); split0.appendChild(h('div','scol','<div class="qdetail"><h4>Named quantities</h4><p class="muted">none coded</p></div>')); root.appendChild(split0); root.appendChild(rulesPaper()); return {root:root, refresh:function(){}}; }
   var split=h('div','split'), vcol=h('div','vcol'), scol=h('div','scol');
@@ -637,7 +639,7 @@ function rulesPaper(){ return h('div','rules','<h3>Rules used to extract the pap
 // ======================================================================
 function buildBlogTab(M, ctx){
   var P=M.P, root=h('div');
-  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.blog,title:'blog'}):DocViewer(P.docs.blog,{keyEq:'concept’s own sentence (solid rule)', keyPr:'sentence carrying one of its edges (dashed rule)', keyFoc:'selected edge (black ring)', keyMn:false});
+  var viewer=P.iframe?DocViewer(null,{iframe:P.iframe.blog,title:'blog',link:{url:P.blog.url,label:'Open the blog'}}):DocViewer(P.docs.blog,{link:{url:P.blog.url,label:'Open the blog'}, keyEq:'concept’s own sentence (solid rule)', keyPr:'sentence carrying one of its edges (dashed rule)', keyFoc:'selected edge (black ring)', keyMn:false});
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The blog text is rebuilt below so it can be read; no concepts or edges have been coded for it.'));
     var split0=h('div','split'); split0.appendChild(h('div','vcol')).appendChild(viewer.root); split0.appendChild(h('div','scol','<div class="qdetail"><h4>Blog concepts</h4><p class="muted">none coded</p></div>')); root.appendChild(split0); root.appendChild(rulesBlog()); return {root:root, refresh:function(){}}; }
   var split=h('div','split'), vcol=h('div','vcol'), scol=h('div','scol');
@@ -689,7 +691,7 @@ function rulesBlog(){ return h('div','rules','<h3>Rules used to extract the blog
 function buildMapTab(M, ctx){
   var P=M.P, root=h('div');
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The map needs both sides coded.')); root.appendChild(rulesMap()); return {root:root, refresh:function(){}}; }
-  root.innerHTML='<div class="mapctl"><label>arcs at rest: <select class="rest"><option value="mapped" selected>pairs between blog-visible quantities</option><option value="all">all paper pairs</option><option value="none">none</option></select></label><button type="button" class="clear">clear selection</button></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Concept-to-concept map between blog concepts and the paper’s named quantities"></svg></div><div class="qdetail s2-detail"><p class="muted">Click a blog concept, a paper quantity, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
+  root.innerHTML='<p class="maplinks">'+(P.paper.url?'<a href="'+esc(P.paper.url)+'" target="_blank" rel="noopener">Open the paper ↗</a>':'')+(P.blog.url?' <a href="'+esc(P.blog.url)+'" target="_blank" rel="noopener">Open the blog ↗</a>':'')+'</p><div class="mapctl"><label>arcs at rest: <select class="rest"><option value="mapped" selected>pairs between blog-visible quantities</option><option value="all">all paper pairs</option><option value="none">none</option></select></label><button type="button" class="clear">clear selection</button></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Concept-to-concept map between blog concepts and the paper’s named quantities"></svg></div><div class="qdetail s2-detail"><p class="muted">Click a blog concept, a paper quantity, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
     '<div class="sec"><h3>Ungrounded pairs (the blog asserts a dependence the paper never states)</h3><div class="s2-ung"></div></div><div class="sec"><h3>Prose scopes against the equation layer</h3><div class="s2-scopes"></div></div>';
   root.insertBefore(h('div','sec','<h3>Skew</h3><div class="s2-summary"></div>'), root.querySelector('.s2-detail').nextSibling);
   root.appendChild(rulesMap());
