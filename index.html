@@ -179,10 +179,12 @@ a{color:var(--accent)}
 .btn{font:inherit;font-weight:600;font-size:.9rem;padding:.4rem .9rem;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:4px;cursor:pointer;text-decoration:none;display:inline-block}
 .btn.secondary{background:var(--surface);color:var(--accent)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.upload{background:var(--surface);border:1px dashed var(--rule);border-radius:6px;padding:1rem 1.2rem;max-width:70ch}
-.upload label{display:block;margin:.5rem 0;font-size:.92rem}
-.upload input[type=url]{font:inherit;font-size:.9rem;width:100%;min-width:14rem;padding:.35rem .5rem;border:1px solid var(--rule);border-radius:4px}
-.upload table.urlform{min-width:0}.upload table.urlform td{vertical-align:middle}
+.upload p{max-width:80ch;margin:.3rem 0 .6rem}
+.upload input[type=url]{font:inherit;font-size:.9rem;width:100%;box-sizing:border-box;padding:.4rem .5rem;border:1px solid var(--rule);border-radius:4px;background:#fff}
+.pairlist.urlbox{max-height:none;overflow:visible}
+.pairlist table.pairs{table-layout:fixed;width:100%}
+.pairlist table.pairs td{vertical-align:middle}
+.pairlist table.pairs td:last-child{text-align:right}
 
 .topbar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding:.5rem 0 0;position:-webkit-sticky}
 .topbar .row{position:relative;padding-right:13rem}
@@ -328,7 +330,7 @@ table.qlist tr.off td{opacity:.45}
 .listhead{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}.listhead h2{margin-right:auto}
 .pfilter{font:inherit;font-size:.9rem;padding:.3rem .6rem;border:1px solid var(--rule);border-radius:4px;background:var(--surface);color:var(--fg);min-width:16rem}
 .pairlist{max-height:60vh;overflow:auto;border:1px solid var(--rule);border-radius:4px;background:var(--surface);margin:.5rem 0 1.5rem}
-.pairlist table.pairs{min-width:0;font-size:.9rem}.pairlist table.pairs td{vertical-align:top}.pairlist .pname{font-weight:600;text-decoration:none;font-size:1rem}
+.pairlist table.pairs{min-width:0;font-size:.9rem}.pairlist .pname{font-weight:600;text-decoration:none;font-size:1rem}
 .pairlist td:last-child{white-space:nowrap}
 .small{font-size:.8rem}
 /* chip strip: switch selection without scrolling back to the table */
@@ -786,9 +788,8 @@ function front(){ var f=h('div','front');
   var rows=ORDER.map(function(pid){ var P=PAIRS[pid]; function lnk(x){ var t=x.title||x.cite; return x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(t)+'</a>':esc(t); }
     return '<tr><td><a class="pname" href="#/p/'+esc(pid)+'/paper">'+esc(pid)+'</a><br><span class="badge '+esc(P.status)+'">'+(P.status==='coded'?'coded':'placeholder')+'</span></td><td>'+lnk(P.paper)+'</td><td>'+esc(firmOf(P.paper))+'</td><td>'+lnk(P.blog)+'</td><td>'+esc(firmOf(P.blog))+'</td><td><a class="btn" href="#/p/'+esc(pid)+'/paper">Compare</a></td></tr>'; }).join('');
   f.innerHTML='<header><a class="howbtn" href="method.html">How this was made</a><p class="eyebrow">paper ↔ blog skew</p><h1>What a blog keeps, drops and invents from the paper it describes</h1><p class="sub">Pick a paper–blog pair, or compare your own. Each pair opens in three views: the paper’s metrics and the equations and sentences that link them (1), the blog’s metrics and the connectives that link those (2), and the map between the two with the skew counts (3).</p></header>'+
-    '<h2>Compare your own pair</h2><div class="upload"><p>Paste the address of a paper and of a blog post. They open in the same three-view layout, but with empty metric lists: nothing is coded automatically. Sites that refuse to be embedded show a link to open them in a new tab instead.</p><form><div class="tblwrap"><table class="gl pairs urlform"><thead><tr><th>Paper</th><th>Blog</th><th></th></tr></thead><tbody><tr><td><input type="url" name="paper" placeholder="https://arxiv.org/abs/…" aria-label="paper address" required></td><td><input type="url" name="blog" placeholder="https://…/blog/…" aria-label="blog address" required></td><td><button type="submit" class="btn">Compare</button></td></tr></tbody></table></div></form></div>'+
-    '<div class="listhead"><h2>Sample Quantum Computing Paper-Blog Pairs</h2><input type="search" class="pfilter" placeholder="filter by title, author, firm…" aria-label="filter pairs"><span class="muted small pcount"></span></div><div class="pairlist"><table class="gl pairs"><thead><tr><th>Pair</th><th>Paper</th><th>Firm</th><th>Blog</th><th>Firm</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<p class="sources" style="margin-top:2rem">Legacy view (symbol-level audit and the old concept-to-concept tab): <a href="legacy/trotter-skew-offline.html">legacy/trotter-skew-offline.html</a>.</p>';
+    '<h2>Compare your own pair</h2><div class="upload"><p>Paste the address of a paper and of a blog post. They open in the same three-view layout, but with empty metric lists: nothing is coded automatically. Sites that refuse to be embedded show a link to open them in a new tab instead.</p><form><div class="pairlist urlbox"><table class="gl pairs urlform"><colgroup><col style="width:17%"><col style="width:29%"><col style="width:8%"><col style="width:29%"><col style="width:8%"><col style="width:9%"></colgroup><thead><tr><th>Pair</th><th colspan="2">Paper</th><th colspan="2">Blog</th><th></th></tr></thead><tbody><tr><td><span class="muted small">your pair</span></td><td colspan="2"><input type="url" name="paper" placeholder="https://arxiv.org/abs/…" aria-label="paper address" required></td><td colspan="2"><input type="url" name="blog" placeholder="https://…/blog/…" aria-label="blog address" required></td><td><button type="submit" class="btn">Compare</button></td></tr></tbody></table></div></form></div>'+
+    '<div class="listhead"><h2>Sample Quantum Computing Paper-Blog Pairs</h2><input type="search" class="pfilter" placeholder="filter by title, author, firm…" aria-label="filter pairs"><span class="muted small pcount"></span></div><div class="pairlist"><table class="gl pairs"><colgroup><col style="width:17%"><col style="width:29%"><col style="width:8%"><col style="width:29%"><col style="width:8%"><col style="width:9%"></colgroup><thead><tr><th>Pair</th><th>Paper</th><th>Firm</th><th>Blog</th><th>Firm</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   var filt=f.querySelector('.pfilter'), trs=f.querySelectorAll('.pairlist tbody tr'), cnt=f.querySelector('.pcount');
   function applyFilter(){ var q=filt.value.trim().toLowerCase(), n=0; Array.prototype.forEach.call(trs,function(tr){ var on=!q||tr.textContent.toLowerCase().indexOf(q)>=0; tr.classList.toggle('hidden',!on); if(on) n++; }); cnt.textContent=n+' of '+trs.length; }
   filt.addEventListener('input',applyFilter); applyFilter();
