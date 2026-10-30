@@ -144,7 +144,7 @@ table.gl td .tag{display:inline-block;font-family:var(--mono);font-size:.7rem;le
 #sk2-svg{display:block;width:100%;height:auto;font-family:var(--sans);font-size:12.5px}
 #sk2-svg .bnode text,#sk2-svg .pnode text{cursor:pointer;fill:var(--fg)}#sk2-svg .bnode circle,#sk2-svg .pnode circle,#sk2-svg .pnode rect{cursor:pointer}
 #sk2-svg .bnode circle,#sk2-svg .bnode polygon{fill:var(--accent);cursor:pointer}#sk2-svg .bnode.nopre circle{fill:none;stroke:var(--muted);stroke-width:1.5}
-#sk2-svg .pnode circle,#sk2-svg .pnode rect{fill:var(--accent)}#sk2-svg .pnode.orphan circle,#sk2-svg .pnode.orphan rect{fill:none;stroke:var(--muted);stroke-width:1.5}
+#sk2-svg .pnode circle,#sk2-svg .pnode rect,#sk2-svg .pnode polygon{fill:var(--accent);cursor:pointer}#sk2-svg .pnode.orphan circle,#sk2-svg .pnode.orphan rect{fill:none;stroke:var(--muted);stroke-width:1.5}
 #sk2-svg .map{stroke:var(--accent);stroke-opacity:.18;stroke-width:1.2;fill:none;cursor:pointer}#sk2-svg .map.on{stroke-opacity:.9;stroke-width:2}#sk2-svg .map.off{stroke-opacity:.05}
 #sk2-svg .bedge2{fill:none;opacity:.8;cursor:pointer}#sk2-svg .bedge2.g-full{stroke:#0072B2;stroke-width:3.2}#sk2-svg .bedge2.g-part{stroke:#5f9fc4;stroke-width:2}#sk2-svg .bedge2.g-none{stroke:#5f9fc4;stroke-width:1;stroke-dasharray:5 4}#sk2-svg .bedge2.g-grey{stroke:var(--muted);stroke-width:1;stroke-dasharray:2 4}
 #sk2-svg .bedge2.dim{opacity:.12}#sk2-svg .bedge2.on{opacity:1}
@@ -565,8 +565,8 @@ function DocViewer(doc, opts){
 }
 
 var MKLEG_PT='<div class="mklegend"><span class="mk mk-sym"></span>symbol metric &nbsp; <span class="mk mk-phr"></span>phrase metric</div>';
-var MKLEG_P='<div class="mklegend"><span class="nw"><span class="mk mk-sym"></span>filled</span> = a blog metric maps to it &nbsp; <span class="nw"><span class="mk mk-sym mk-orph"></span>hollow</span> = not in the blog</div>';
-var MKLEG_B='<div class="mklegend"><span class="nw"><span class="mk mk-var"></span>filled circle</span> = maps to a paper metric &nbsp; <span class="nw"><span class="mk mk-rec"></span>hollow</span> = no paper metric &nbsp; <span class="nw"><span class="mk mk-coll"></span>diamond</span> = collapsed: stands for two paper metrics the paper links</div>';
+var MKLEG_P='<div class="mklegend"><span class="nw"><span class="mk mk-sym"></span>filled</span> = a blog metric maps to it &nbsp; <span class="nw"><span class="mk mk-sym mk-orph"></span>hollow</span> = not in the blog &nbsp; <span class="nw"><span class="mk mk-coll"></span>diamond</span> = two or more blog metrics map to it</div>';
+var MKLEG_B='<div class="mklegend"><span class="nw"><span class="mk mk-var"></span>filled circle</span> = maps to a paper metric &nbsp; <span class="nw"><span class="mk mk-rec"></span>hollow</span> = no paper metric &nbsp; <span class="nw"><span class="mk mk-coll"></span>diamond</span> = stands for two or more paper metrics</div>';
 function shortLbl(l){ return String(l).replace(/\s*\([^)]*\)/g,'').trim(); }
 function lgLine(cls,label){ return '<span class="lgi"><svg width="44" height="12" viewBox="0 0 44 12" aria-hidden="true"><path class="'+cls+'" d="M2,6 L42,6"/></svg>'+label+'</span>'; }
 var MAPLEG='<div class="maplegend">'+
@@ -768,8 +768,8 @@ function buildMapTab(M, ctx){
   function tw(t){ return cv.measureText(t).width; }
   // one fixed start line per column, placed just past the longest label (so every arc leaves from the same x)
   var wP=Math.max.apply(null,QORDER.map(function(k){ var q=QI[k]; return tw(shortLbl(q.label)); })), wB=Math.max.apply(null,B.map(function(b){ return tw(shortLbl(b.label)); }));
-  // collapsed blog metrics (Lyn 2026-10-30): a blog metric whose preimage holds two paper metrics the paper links is drawn as a diamond
-  var PL0=M.paperLayer(), collB={}; Object.keys(M.COLL).forEach(function(k){ if(PL0[k]&&M.wit(k,PL0).length) M.COLL[k].forEach(function(b){ collB[b]=1; }); });
+  // Lyn 2026-10-30: a metric on either side that stands for two or more metrics on the other side is drawn as a diamond (whether or not the paper links them)
+  var collB={}, collP={}; B.forEach(function(b){ if((b.preimage||[]).length>=2) collB[b.id]=1; }); QORDER.forEach(function(k){ if((M.mapped[k]||[]).length>=2) collP[k]=1; });
   var xEndP={}, xStartB={}; QORDER.forEach(function(k){ xEndP[k]=xP+10+wP+14; }); B.forEach(function(b){ xStartB[b.id]=xB-10-wB-14; });
   var maxX=Math.max.apply(null,QORDER.map(function(k){ return xEndP[k]; })); W=Math.max(W, maxX+160); svg.setAttribute('viewBox','0 0 '+W+' '+H);
   function el(tag,attrs,txt){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; return e; }
@@ -782,8 +782,8 @@ function buildMapTab(M, ctx){
   function arcPath(a,c){ var p=posP[a], q=posP[c]; var dy=Math.abs(p.y-q.y), bulge=Math.min(30+dy*0.35,140); var xm=Math.max(xEndP[a],xEndP[c])+bulge; return 'M'+xEndP[a]+','+p.y+' C'+xm+','+p.y+' '+xm+','+q.y+' '+xEndP[c]+','+q.y; }
   var mapEls=[]; B.forEach(function(b){ (b.preimage||[]).forEach(function(k){ var a=posB[b.id], c=posP[k]; var p=el('path',{d:'M'+(a.x+12)+','+a.y+' C'+(a.x+150)+','+a.y+' '+(c.x-150)+','+c.y+' '+(c.x-12)+','+c.y,'class':'map','data-b':b.id,'data-p':k}); gMap.appendChild(p); mapEls.push(p); }); });
   var bedgeEls=[]; E.forEach(function(e,i){ var a=posB[e.source], c=posB[e.target]; var dy=Math.abs(a.y-c.y), bulge=Math.min(30+dy*0.35,130); var xm=Math.min(xStartB[e.source],xStartB[e.target])-bulge; var d='M'+xStartB[e.source]+','+a.y+' C'+xm+','+a.y+' '+xm+','+c.y+' '+xStartB[e.target]+','+c.y; var p=el('path',{d:d,'class':'bedge2','data-e':i}); var hit=el('path',{d:d,'class':'bedgehit','data-e':i}); gBE.appendChild(p); gBE.appendChild(hit); bedgeEls.push(p); });
-  B.forEach(function(b){ var g=el('g',{'class':'bnode'+((b.preimage||[]).length?'':' nopre')+(collB[b.id]?' coll':''),'data-b':b.id}); var q=posB[b.id]; g.appendChild(el('title',{},b.label+(collB[b.id]?' — collapsed: stands for two paper metrics the paper links':''))); if(collB[b.id]) g.appendChild(el('polygon',{points:q.x+','+(q.y-7)+' '+(q.x+7)+','+q.y+' '+q.x+','+(q.y+7)+' '+(q.x-7)+','+q.y})); else g.appendChild(el('circle',{cx:q.x,cy:q.y,r:5.5})); g.appendChild(el('text',{x:q.x-10,y:q.y+4,'text-anchor':'end'},shortLbl(b.label))); gB.appendChild(g); });
-  QORDER.forEach(function(k){ var q=QI[k], pos=posP[k]; var g=el('g',{'class':'pnode'+(M.mapped[k]?'':' orphan'),'data-p':k}); g.appendChild(el('title',{},q.label)); g.appendChild(el('circle',{cx:pos.x,cy:pos.y,r:5.5})); g.appendChild(el('text',{x:pos.x+10,y:pos.y+4},shortLbl(q.label))); gP.appendChild(g); });
+  B.forEach(function(b){ var g=el('g',{'class':'bnode'+((b.preimage||[]).length?'':' nopre')+(collB[b.id]?' coll':''),'data-b':b.id}); var q=posB[b.id]; g.appendChild(el('title',{},b.label+(collB[b.id]?' — stands for '+(b.preimage||[]).length+' paper metrics':''))); if(collB[b.id]) g.appendChild(el('polygon',{points:q.x+','+(q.y-7)+' '+(q.x+7)+','+q.y+' '+q.x+','+(q.y+7)+' '+(q.x-7)+','+q.y})); else g.appendChild(el('circle',{cx:q.x,cy:q.y,r:5.5})); g.appendChild(el('text',{x:q.x-10,y:q.y+4,'text-anchor':'end'},shortLbl(b.label))); gB.appendChild(g); });
+  QORDER.forEach(function(k){ var q=QI[k], pos=posP[k]; var g=el('g',{'class':'pnode'+(M.mapped[k]?'':' orphan')+(collP[k]?' coll':''),'data-p':k}); g.appendChild(el('title',{},q.label+(collP[k]?' — '+M.mapped[k].length+' blog metrics map to it':''))); if(collP[k]) g.appendChild(el('polygon',{points:pos.x+','+(pos.y-7)+' '+(pos.x+7)+','+pos.y+' '+pos.x+','+(pos.y+7)+' '+(pos.x-7)+','+pos.y})); else g.appendChild(el('circle',{cx:pos.x,cy:pos.y,r:5.5})); g.appendChild(el('text',{x:pos.x+10,y:pos.y+4},shortLbl(q.label))); gP.appendChild(g); });
   var PL={}, restSel=root.querySelector('.rest'), detail=root.querySelector('.s2-detail');
   function show(x){ detail.innerHTML=x; ts(detail); }
   function drawRest(){ gRest.innerHTML=''; var mode=restSel.value; if(mode==='none') return;
