@@ -501,7 +501,7 @@ function layerLabel(){ var parts=[]; if(L.eq) parts.push('equations'); var pr=[]
 // every pair scoring at or above the threshold is joined, and joins chain. Links, equations and mappings are never read
 // for grouping; they are re-keyed onto the groups afterwards so every count on the page is recomputed under the dial.
 var LUMP = {};   // pid -> threshold (1 = no lumping)
-var FILTER = {}; // pid -> {pc: top % of paper metrics by PageRank shown, bm: minimum blog mentions for a blog metric to be shown} (map only; Lyn 2026-10-31)
+var FILTER = {}; // pid -> {pc: top % of paper metrics by PageRank shown, nb: hide paper metrics no blog metric stands for} (map only; Lyn 2026-10-31)
 var DIALN = 0;
 // PageRank on an undirected graph (damping 0.85; a node with no links spreads its weight evenly); sums to 1
 function pagerank(V, adj){ var N=V.length, pr={}, d=0.85; V.forEach(function(v){ pr[v]=1/N; }); for(var it=0;it<100;it++){ var nx={}, dang=0; V.forEach(function(v){ nx[v]=(1-d)/N; if(!(adj[v]||[]).length) dang+=pr[v]; }); V.forEach(function(v){ var nb=adj[v]||[]; nb.forEach(function(w){ nx[w]+=d*pr[v]/nb.length; }); }); V.forEach(function(v){ nx[v]+=d*dang/N; }); pr=nx; } return pr; }
@@ -852,7 +852,7 @@ function buildMapTab(M, ctx){
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The map needs both sides coded.'));  return {root:root, refresh:function(){}}; }
   var mapbody=h('div'); root.appendChild(mapbody); mapbody.innerHTML='<div class="filterview"><h3>Filter view</h3><div class="fv-dial"></div>'+
     '<div class="fv-row"><label>Paper metrics by centrality: show the top <input type="range" class="fv-pc" min="5" max="100" step="5" aria-label="share of paper metrics shown, by PageRank"> <span class="fv-pcv"></span></label></div>'+
-    '<div class="fv-row"><label>Blog metrics by mentions in the blog: show those with at least <input type="range" class="fv-bm" min="0" max="10" step="1" aria-label="minimum blog mentions"> <span class="fv-bmv"></span></label></div>'+
+    '<div class="fv-row"><label><input type="checkbox" class="fv-nb"> Hide paper metrics not in the blog</label> <span class="fv-nbv small muted"></span></div>'+
     '<div class="fv-row"><label>Edge visibility (paper links drawn when nothing is selected): <select class="rest"><option value="mapped" selected>pairs between blog-visible metrics</option><option value="all">all paper pairs</option><option value="none">none</option></select></label> <button type="button" class="clear">clear selection</button></div>'+
     '<p class="muted small fv-note"></p></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Map between the blog’s metrics and the paper’s named metrics"></svg></div><div class="qdetail s2-detail"><p class="muted">Click a blog metric, a paper metric, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
     '<div class="sec"><h3>Ungrounded pairs (the blog asserts a dependence the paper never states)</h3><div class="s2-ung"></div></div>';
@@ -860,19 +860,19 @@ function buildMapTab(M, ctx){
   
   var svg=root.querySelector('#sk2-svg'), NS='http://www.w3.org/2000/svg', B=M.B, E=M.E, QORDER=M.QORDER, BI=M.BI, QI=M.QI;
   var W=1100, rowB=26, rowP=26, top=14, H=top+Math.max(B.length*rowB,QORDER.length*rowP)+20; svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  // Lyn 2026-10-31: Filter view. Paper metrics are kept by centrality (top pc% by PageRank on the paper link graph), blog metrics by their number of
-  // coded mentions (at least bm). Hidden nodes keep no row (the map collapses vertically) and every line touching one is hidden; the tables are not filtered.
-  var FV=FILTER[ctx.pid]||(FILTER[ctx.pid]={pc:100,bm:0}); var PL00=M.paperLayer(), adj0={}; QORDER.forEach(function(k){ adj0[k]=[]; }); Object.keys(PL00).forEach(function(k){ if(!M.wit(k,PL00).length) return; var ab=k.split('|'); if(adj0[ab[0]]&&adj0[ab[1]]){ adj0[ab[0]].push(ab[1]); adj0[ab[1]].push(ab[0]); } });
+  // Lyn 2026-10-31: Filter view. Paper metrics are kept by centrality (top pc% by PageRank on the paper link graph), and optionally only those the
+  // blog names (a blog metric stands for them). Hidden nodes keep no row (the map collapses vertically) and every line touching one is hidden; the tables are not filtered.
+  var FV=FILTER[ctx.pid]||(FILTER[ctx.pid]={pc:100,nb:false}); var PL00=M.paperLayer(), adj0={}; QORDER.forEach(function(k){ adj0[k]=[]; }); Object.keys(PL00).forEach(function(k){ if(!M.wit(k,PL00).length) return; var ab=k.split('|'); if(adj0[ab[0]]&&adj0[ab[1]]){ adj0[ab[0]].push(ab[1]); adj0[ab[1]].push(ab[0]); } });
   var PR0=pagerank(QORDER,adj0), nKeep=Math.max(1,Math.ceil(FV.pc/100*QORDER.length)), HIDP={}, HIDB={}; QORDER.slice().sort(function(a,b){ return PR0[b]-PR0[a]; }).forEach(function(k,i){ if(i>=nKeep) HIDP[k]=1; });
-  B.forEach(function(b){ if((b.mentions||[]).length<FV.bm) HIDB[b.id]=1; });
+  if(FV.nb) QORDER.forEach(function(k){ if(!M.mapped[k]) HIDP[k]=1; });
   var nVB=B.filter(function(b){ return !HIDB[b.id]; }).length, nVP=QORDER.filter(function(k){ return !HIDP[k]; }).length; H=top+Math.max(nVB*rowB,nVP*rowP,rowP)+20; svg.setAttribute('viewBox','0 0 '+W+' '+H);
   var xB=400, xP=720, posB={}, posP={}; var vi=0; B.forEach(function(b){ if(!HIDB[b.id]) vi++; posB[b.id]={x:xB,y:top+Math.max(vi-1,0)*rowB+rowB/2}; }); vi=0; QORDER.forEach(function(k){ if(!HIDP[k]) vi++; posP[k]={x:xP,y:top+Math.max(vi-1,0)*rowP+rowP/2}; });
   var fvr=root.querySelector('.filterview'), dl=ctx.makeDial&&ctx.makeDial('map'); if(dl) fvr.querySelector('.fv-dial').appendChild(dl);
-  var pcI=fvr.querySelector('.fv-pc'), bmI=fvr.querySelector('.fv-bm'), maxM=Math.max.apply(null,[1].concat(B.map(function(b){ return (b.mentions||[]).length; }))); bmI.max=maxM; pcI.value=FV.pc; bmI.value=Math.min(FV.bm,maxM);
-  function fvTxt(){ fvr.querySelector('.fv-pcv').textContent=pcI.value+'% ('+Math.max(1,Math.ceil(pcI.value/100*QORDER.length))+' of '+QORDER.length+')'; fvr.querySelector('.fv-bmv').textContent=bmI.value+' mention'+(bmI.value==1?'':'s')+' ('+B.filter(function(b){ return (b.mentions||[]).length>=bmI.value; }).length+' of '+B.length+')'; }
-  fvTxt(); pcI.addEventListener('input',fvTxt); bmI.addEventListener('input',fvTxt);
-  function fvApply(){ FV.pc=+pcI.value; FV.bm=+bmI.value; ctx.rebuild('map'); } pcI.addEventListener('change',fvApply); bmI.addEventListener('change',fvApply);
-  fvr.querySelector('.fv-note').textContent=(Object.keys(HIDP).length||Object.keys(HIDB).length)?'Hidden on the map: '+Object.keys(HIDP).length+' paper metrics and '+Object.keys(HIDB).length+' blog metrics, with every line that touches them. The tables below are not filtered.':'All metrics shown. The filters change the map only; the tables below always count every metric.';
+  var pcI=fvr.querySelector('.fv-pc'), nbI=fvr.querySelector('.fv-nb'); pcI.value=FV.pc; nbI.checked=!!FV.nb;
+  function fvTxt(){ fvr.querySelector('.fv-pcv').textContent=pcI.value+'% ('+Math.max(1,Math.ceil(pcI.value/100*QORDER.length))+' of '+QORDER.length+')'; fvr.querySelector('.fv-nbv').textContent='('+QORDER.filter(function(k){ return !M.mapped[k]; }).length+' of '+QORDER.length+' paper metrics have no blog metric standing for them)'; }
+  fvTxt(); pcI.addEventListener('input',fvTxt);
+  function fvApply(){ FV.pc=+pcI.value; FV.nb=nbI.checked; ctx.rebuild('map'); } pcI.addEventListener('change',fvApply); nbI.addEventListener('change',fvApply);
+  fvr.querySelector('.fv-note').textContent=(Object.keys(HIDP).length||Object.keys(HIDB).length)?'Hidden on the map: '+Object.keys(HIDP).length+' paper metrics, with every line that touches them. The tables below are not filtered.':'All metrics shown. The filters change the map only; the tables below always count every metric.';
   // label widths (canvas measure, same font stack as the SVG) so arcs start past the words, not under them
   var cv=document.createElement('canvas').getContext('2d'); cv.font='12.5px "Source Sans 3","Helvetica Neue",Arial,sans-serif';
   function tw(t){ return cv.measureText(t).width; }
