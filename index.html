@@ -843,7 +843,7 @@ function buildMapTab(M, ctx){
   var wP=Math.max.apply(null,QORDER.map(function(k){ var q=QI[k]; return tw(shortLbl(q.label)); })), wB=Math.max.apply(null,B.map(function(b){ return tw(clip(decap(shortLbl(b.label)))); }));
   // Lyn 2026-10-30: a metric on either side that stands for two or more metrics on the other side is drawn as a diamond (whether or not the paper links them)
   var collB={}, collP={}; B.forEach(function(b){ if((b.preimage||[]).length>=2) collB[b.id]=1; }); QORDER.forEach(function(k){ if((M.mapped[k]||[]).length>=2) collP[k]=1; });
-  var xEndP={}, xStartB={}; QORDER.forEach(function(k){ xEndP[k]=xP+10+wP+14; }); B.forEach(function(b){ xStartB[b.id]=xB-10-tw(clip(decap(shortLbl(b.label))))-14; });   // Lyn 2026-10-31: an edge starts at its own label, not at the longest one
+  var xEndP={}, xStartB={}; QORDER.forEach(function(k){ xEndP[k]=xP+10+wP+14; }); B.forEach(function(b){ xStartB[b.id]=xB-10-wB-4; });   // Lyn 2026-10-31: all edges start on one vertical line just left of the longest (clipped) label
   var maxX=Math.max.apply(null,QORDER.map(function(k){ return xEndP[k]; })); W=Math.max(W, maxX+160); svg.setAttribute('viewBox','0 0 '+W+' '+H);
   function el(tag,attrs,txt){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; return e; }
   var gRest=el('g'), gPE=el('g'), gBE=el('g'), gMap=el('g'), gB=el('g'), gP=el('g');
