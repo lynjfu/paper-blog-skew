@@ -449,10 +449,16 @@ table.sal td.sk-o2{background:rgba(213,94,0,.38)}table.sal td.sk-o1{background:r
 
 /* Lyn 2026-10-31: metric term boundary on the Metrics tabs; Filter view on the map */
 .lumpbar{margin:.4rem 0 .5rem;font-size:.88rem}.lumpbar input[type=range]{vertical-align:middle;margin:0 .35rem;width:180px}.lumpbar p{margin:.3rem 0 0}.lumpbar .lumpval{display:block;color:var(--muted);margin-top:.15rem}
-.filterview{margin:.6rem 0 .5rem;padding:.6rem .8rem;border:1px solid var(--rule);border-radius:6px;background:#eef4f9}
-.filterview h3{margin:0 0 .3rem;font-size:1rem}.filterview .fv-row{margin:.35rem 0;font-size:.88rem}.filterview input[type=range]{vertical-align:middle;margin:0 .35rem;width:180px}
-.filterview .lumpbar{margin-top:0}.filterview .fv-note{margin:.4rem 0 0}
-.filterview button{font:inherit;font-size:.82rem;padding:.2rem .6rem;border:1px solid var(--rule);background:var(--surface);color:var(--fg);border-radius:4px;cursor:pointer}
+.filterview{margin:.6rem 0 .6rem;padding:.7rem .9rem .6rem;border:1px solid var(--rule);border-radius:6px;background:#eef4f9;font-size:.86rem}
+.filterview .fv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem}.filterview h3{margin:0;font-size:.95rem}
+.fv-grid{display:grid;grid-template-columns:max-content max-content 1fr;gap:.4rem 1rem;align-items:center}
+.fv-cells{display:contents}.fv-l{font-weight:600;white-space:nowrap}
+.fv-c{display:flex;align-items:center;gap:.4rem;width:17rem}.fv-c input[type=range]{flex:1;min-width:0;margin:0}.fv-end{color:var(--muted);font-size:.8rem;width:2.4rem}.fv-end:first-child{text-align:right}
+.fv-c select{font:inherit;font-size:.84rem;padding:.12rem .3rem;width:100%}.fv-chk{display:flex;align-items:center;gap:.35rem;cursor:pointer}
+.fv-v{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.82rem}
+.filterview .fv-note{margin:.5rem 0 0;color:var(--muted);font-size:.8rem}
+.filterview button{font:inherit;font-size:.8rem;padding:.18rem .6rem;border:1px solid var(--rule);background:var(--surface);color:var(--fg);border-radius:4px;cursor:pointer}
+@media (max-width:640px){.fv-grid{grid-template-columns:1fr}.fv-c{width:100%}.fv-v{margin-bottom:.3rem}}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .filterview{background:#1c2733}}
 :root[data-theme="dark"] .filterview{background:#1c2733}
 .tbltoc{margin:.4rem 0 .6rem;padding:.4rem .6rem;border:1px solid var(--rule);border-radius:4px}.tbltoc a{cursor:pointer;white-space:nowrap}
@@ -851,11 +857,11 @@ function buildBlogTab(M, ctx){
 function buildMapTab(M, ctx){
   var P=M.P, root=h('div');
   if(P.status!=='coded'){ root.appendChild(h('div','msg','<b>Not yet coded.</b> The map needs both sides coded.'));  return {root:root, refresh:function(){}}; }
-  var mapbody=h('div'); root.appendChild(mapbody); mapbody.innerHTML='<div class="filterview"><h3>Filter view</h3><div class="fv-dial"></div>'+
-    '<div class="fv-row"><label>Paper metrics by centrality: show the top <input type="range" class="fv-pc" min="5" max="100" step="5" aria-label="share of paper metrics shown, by PageRank"> <span class="fv-pcv"></span></label></div>'+
-    '<div class="fv-row"><label><input type="checkbox" class="fv-nb"> Hide paper metrics not in the blog</label> <span class="fv-nbv small muted"></span></div>'+
-    '<div class="fv-row"><label>Edge visibility (paper links drawn when nothing is selected): <select class="rest"><option value="mapped" selected>pairs between blog-visible metrics</option><option value="all">all paper pairs</option><option value="none">none</option></select></label> <button type="button" class="clear">clear selection</button></div>'+
-    '<p class="muted small fv-note"></p></div>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Map between the blog’s metrics and the paper’s named metrics"></svg></div><nav class="tbltoc small"><b>Tables below:</b> <a data-goto="table-1">1. Status of each paper link</a> · <a data-goto="table-2">2. Per-metric coverage</a> · <a data-goto="table-3">3. Salience</a> · <a data-goto="table-4">4. Selective simplification</a> · <a data-goto="ungrounded">Ungrounded pairs</a></nav><div class="qdetail s2-detail"><p class="muted">Click a blog metric, a paper metric, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
+  var mapbody=h('div'); root.appendChild(mapbody); mapbody.innerHTML='<section class="filterview" aria-label="Filter view"><div class="fv-head"><h3>Filter view</h3><button type="button" class="clear">Clear selection</button></div><div class="fv-grid">'+
+    '<label class="fv-l" for="fvpc-'+ctx.pid+'">Centrality</label><span class="fv-c"><span class="fv-end">top</span><input type="range" class="fv-pc" id="fvpc-'+ctx.pid+'" min="5" max="100" step="5" aria-label="share of paper metrics shown, by PageRank"><span class="fv-end">all</span></span><span class="fv-v fv-pcv"></span>'+
+    '<label class="fv-l" for="fvnb-'+ctx.pid+'">Blog coverage</label><span class="fv-c"><label class="fv-chk"><input type="checkbox" class="fv-nb" id="fvnb-'+ctx.pid+'"> hide paper metrics not in the blog</label></span><span class="fv-v fv-nbv"></span>'+
+    '<label class="fv-l" for="fvrest-'+ctx.pid+'">Edge visibility</label><span class="fv-c"><select class="rest" id="fvrest-'+ctx.pid+'" title="Paper links drawn when nothing is selected"><option value="mapped" selected>links between metrics in the blog</option><option value="all">all paper links</option><option value="none">none</option></select></span><span class="fv-v">paper links drawn at rest</span>'+
+    '</div><p class="fv-note"></p></section>'+MAPLEG+'<div class="mxwrap" style="padding:0"><svg id="sk2-svg" role="img" aria-label="Map between the blog’s metrics and the paper’s named metrics"></svg></div><nav class="tbltoc small"><b>Tables below:</b> <a data-goto="table-1">1. Status of each paper link</a> · <a data-goto="table-2">2. Per-metric coverage</a> · <a data-goto="table-3">3. Salience</a> · <a data-goto="table-4">4. Selective simplification</a> · <a data-goto="ungrounded">Ungrounded pairs</a></nav><div class="qdetail s2-detail"><p class="muted">Click a blog metric, a paper metric, a mapping line, or a blog edge. The detail always names the witness: which blog edge implied a pair, and which equation or sentence links it.</p></div>'+
     '<div class="sec"><h3 data-table="ungrounded">Ungrounded pairs (the blog asserts a dependence the paper never states)</h3><div class="s2-ung"></div></div>';
   mapbody.insertBefore(h('div','sec','<h3>Skew</h3><div class="s2-summary"></div>'), mapbody.querySelector('.s2-detail').nextSibling);
   
@@ -870,12 +876,12 @@ function buildMapTab(M, ctx){
   if(FV.nb) QORDER.forEach(function(k){ if(!M.mapped[k]) HIDP[k]=1; });
   var nVB=B.filter(function(b){ return !HIDB[b.id]; }).length, nVP=QORDER.filter(function(k){ return !HIDP[k]; }).length; H=top+Math.max(nVB*rowB,nVP*rowP,rowP)+20; svg.setAttribute('viewBox','0 0 '+W+' '+H);
   var xB=400, xP=720, posB={}, posP={}; var vi=0; B.forEach(function(b){ if(!HIDB[b.id]) vi++; posB[b.id]={x:xB,y:top+Math.max(vi-1,0)*rowB+rowB/2}; }); vi=0; QORDER.forEach(function(k){ if(!HIDP[k]) vi++; posP[k]={x:xP,y:top+Math.max(vi-1,0)*rowP+rowP/2}; });
-  var fvr=root.querySelector('.filterview'), dl=ctx.makeDial&&ctx.makeDial('map'); if(dl) fvr.querySelector('.fv-dial').appendChild(dl);
+  var fvr=root.querySelector('.filterview'), dl=ctx.makeDial&&ctx.makeDial('map',true), grid=fvr.querySelector('.fv-grid'); if(dl) grid.insertBefore(dl,grid.firstChild);
   var pcI=fvr.querySelector('.fv-pc'), nbI=fvr.querySelector('.fv-nb'); pcI.value=FV.pc; nbI.checked=!!FV.nb;
-  function fvTxt(){ fvr.querySelector('.fv-pcv').textContent=pcI.value+'% ('+Math.max(1,Math.ceil(pcI.value/100*QORDER.length))+' of '+QORDER.length+')'; fvr.querySelector('.fv-nbv').textContent='('+QORDER.filter(function(k){ return !M.mapped[k]; }).length+' of '+QORDER.length+' paper metrics have no blog metric standing for them)'; }
+  function fvTxt(){ fvr.querySelector('.fv-pcv').textContent='top '+pcI.value+'% by PageRank · '+Math.max(1,Math.ceil(pcI.value/100*QORDER.length))+' of '+QORDER.length+' paper metrics'; fvr.querySelector('.fv-nbv').textContent=QORDER.filter(function(k){ return !M.mapped[k]; }).length+' of '+QORDER.length+' paper metrics not in the blog'; }
   fvTxt(); pcI.addEventListener('input',fvTxt);
   function fvApply(){ FV.pc=+pcI.value; FV.nb=nbI.checked; ctx.rebuild('map'); } pcI.addEventListener('change',fvApply); nbI.addEventListener('change',fvApply);
-  fvr.querySelector('.fv-note').textContent=(Object.keys(HIDP).length||Object.keys(HIDB).length)?'Hidden on the map: '+Object.keys(HIDP).length+' paper metrics, with every line that touches them. The tables below are not filtered.':'All metrics shown. The filters change the map only; the tables below always count every metric.';
+  fvr.querySelector('.fv-note').textContent=(Object.keys(HIDP).length?'Showing '+(QORDER.length-Object.keys(HIDP).length)+' of '+QORDER.length+' paper metrics. ':'Showing all metrics. ')+'Filters change the map only; the tables below count every metric.';
   // label widths (canvas measure, same font stack as the SVG) so arcs start past the words, not under them
   var cv=document.createElement('canvas').getContext('2d'); cv.font='12.5px "Source Sans 3","Helvetica Neue",Arial,sans-serif';
   function tw(t){ return cv.measureText(t).width; }
@@ -1040,10 +1046,10 @@ function pairView(pid){ if(VIEWS[pid]) return VIEWS[pid]; var P=PAIRS[pid]; if(!
   var ctx={};
   function rebuild(tab){ var y=window.scrollY; delete VIEWS[pid]; route(); if(VIEWS[pid]){ VIEWS[pid].showTab(tab); if(VIEWS[pid].afterRebuild) VIEWS[pid].afterRebuild(); } window.scrollTo({top:y}); }
   ctx.rebuild=rebuild; ctx.pid=pid;
-  ctx.makeDial=function(tab){ if(!(P.sim&&P.Q)) return null; var dial=h('div','lumpbar'); var lp=PL0.lump||{tau:1,paperGroups:0,blogGroups:0,paperFrom:P.Q.length,paperTo:P.Q.length,blogFrom:(P.B||[]).length,blogTo:(P.B||[]).length,model:P.sim.model}; var did='tb-'+(++DIALN);
-    dial.innerHTML='<label for="'+did+'"><b>Metric boundary</b></label> <span class="small">fine</span><input type="range" id="'+did+'" min="0" max="0.5" step="0.01" value="'+(1-tau).toFixed(2)+'" aria-label="metric boundary, fine to coarse"><span class="small">coarse</span> <span class="lumpval small"></span>'+
-      '<p class="muted small">Metrics discerned from prose may not be described using the exact same term throughout the article. Use the slider to relax the boundary of a metric’s terminology from fine (i.e. only an exact match of the term throughout the paper) to coarse (e.g. ‘error rate’ conflates with ‘fidelity’). Terms are joined by the similarity of their wording only ('+esc(lp.model||'sentence embeddings')+'); links never join two metrics, and symbols (formula variables) never join. A joined metric is marked ⊕ with the number of terms it holds.</p>';
-    var val=dial.querySelector('.lumpval'); function txt(t,l){ return t<1?'similarity ≥ '+t.toFixed(2)+': '+l.paperFrom+' → '+l.paperTo+' paper metrics, '+l.blogFrom+' → '+l.blogTo+' blog metrics':'fine: exact terms only (as coded)'; }
+  ctx.makeDial=function(tab,compact){ if(!(P.sim&&P.Q)) return null; var dial=h('div',compact?'fv-cells':'lumpbar'); var lp=PL0.lump||{tau:1,paperGroups:0,blogGroups:0,paperFrom:P.Q.length,paperTo:P.Q.length,blogFrom:(P.B||[]).length,blogTo:(P.B||[]).length,model:P.sim.model}; var did='tb-'+(++DIALN);
+    dial.innerHTML=compact?'<label class="fv-l" for="'+did+'">Metric boundary</label><span class="fv-c"><span class="fv-end">fine</span><input type="range" id="'+did+'" min="0" max="0.5" step="0.01" value="'+(1-tau).toFixed(2)+'" aria-label="metric boundary, fine to coarse"><span class="fv-end">coarse</span></span><span class="fv-v lumpval"></span>':'<label for="'+did+'"><b>Metric boundary</b></label> <span class="small">fine</span><input type="range" id="'+did+'" min="0" max="0.5" step="0.01" value="'+(1-tau).toFixed(2)+'" aria-label="metric boundary, fine to coarse"><span class="small">coarse</span> <span class="lumpval small"></span>'+
+      '<p class="muted small">Metrics discerned from prose may not be described using the exact same term throughout the article. Use the slider to relax the boundary of a metric’s terminology from fine (i.e. only an exact match of the term throughout the paper) to coarse (e.g. ‘error rate’ conflates with ‘fidelity’). Terms are joined by the semantic similarity of their wording only ('+esc(lp.model||'sentence embeddings')+'); links never join two metrics, and symbols (formula variables) never join. A joined metric is marked ⊕ with the number of terms it holds.</p>';
+    var val=dial.querySelector('.lumpval'); function txt(t,l){ return t<1?'semantic similarity ≥ '+t.toFixed(2)+' · '+l.paperTo+' of '+l.paperFrom+' paper, '+l.blogTo+' of '+l.blogFrom+' blog metrics':'exact terms only (as coded)'; }
     val.textContent=txt(tau,lp); var rng=dial.querySelector('input'); rng.addEventListener('input',function(){ var t=1-parseFloat(rng.value); val.textContent=txt(t,(lumpP(P,t).lump)||lp); });
     rng.addEventListener('change',function(){ LUMP[pid]=Math.round((1-parseFloat(rng.value))*100)/100; rebuild(tab); });
     return dial; };
