@@ -1031,6 +1031,8 @@ function buildMapTab(M, ctx){
   function parc(a,c,cls){ svg.classList.add('dimrest'); if(HIDP[a]||HIDP[c]||cls==='st-ung') return; gPE.appendChild(el('path',{d:arcPath(a,c),'class':'pedge2 '+cls})); }
   function selP(k){ clear(); Array.prototype.forEach.call(svg.querySelectorAll('.pnode'),function(g){ g.classList.toggle('dim',g.dataset.p!==k); }); svg.querySelector('.pnode[data-p="'+k+'"]').classList.add('sel');
     var imgs=M.mapped[k]||[]; mapEls.forEach(function(p){ p.classList.toggle('on',p.dataset.p===k); p.classList.toggle('off',p.dataset.p!==k); }); Array.prototype.forEach.call(svg.querySelectorAll('.bnode'),function(g){ g.classList.toggle('dim',imgs.indexOf(g.dataset.b)<0); });
+    // as when a blog metric is selected: keep the blog links of the metric's blog images, dim the rest
+    E.forEach(function(e,i){ var on=imgs.indexOf(e.source)>=0||imgs.indexOf(e.target)>=0; bedgeEls[i].classList.toggle('on',on); bedgeEls[i].classList.toggle('dim',!on); });
     var partners=Object.keys(PL).filter(function(x){ return x.split('|').indexOf(k)>=0; }).map(function(x){ var ab=x.split('|'); return ab[0]===k?ab[1]:ab[0]; });
     var impl=Object.keys(M.IMP).filter(function(x){ return x.split('|').indexOf(k)>=0&&!PL[x]; }).map(function(x){ var ab=x.split('|'); return ab[0]===k?ab[1]:ab[0]; });
     var groups={rep:[],unl:[],orph:[],abs:[]}; partners.forEach(function(c){ var s=M.status(key(k,c),PL); if(groups[s]) groups[s].push(c); parc(k,c,'st-'+s); svg.querySelector('.pnode[data-p="'+c+'"]').classList.remove('dim'); }); impl.forEach(function(c){ parc(k,c,'st-ung'); svg.querySelector('.pnode[data-p="'+c+'"]').classList.remove('dim'); });
