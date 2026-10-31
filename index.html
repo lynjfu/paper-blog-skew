@@ -173,6 +173,18 @@ table.gl td .tag{display:inline-block;font-family:var(--mono);font-size:.7rem;le
 #sk2-svg .rest2{opacity:.8}#sk2-svg .dimrest .rest2{opacity:.08}
 #sk2-svg.dimrest .rest2{opacity:.06}
 
+/* ===== Lyn 2026-10-31: both sides of the map drawn by one set of rules (supersedes the per-side rules above) ===== */
+#sk2-svg .bedge2,#sk2-svg .rest2,#sk2-svg .pedge2{fill:none;opacity:.8}
+#sk2-svg .bedge2.on,#sk2-svg .pedge2{opacity:1}
+#sk2-svg .bedge2.dim,#sk2-svg.dimrest .rest2{opacity:.12}
+#sk2-svg .bedge2.g-full,#sk2-svg .rest2.st-rep,#sk2-svg .pedge2.st-rep{stroke:#0072B2;stroke-width:3;stroke-dasharray:none}
+#sk2-svg .bedge2.g-part{stroke:#0072B2;stroke-width:1.1;stroke-dasharray:none}
+#sk2-svg .bedge2.g-none,#sk2-svg .bedge2.g-grey,#sk2-svg .rest2.st-unl,#sk2-svg .rest2.st-orph,#sk2-svg .rest2.st-abs,#sk2-svg .pedge2.st-unl,#sk2-svg .pedge2.st-orph,#sk2-svg .pedge2.st-abs{stroke:#0072B2;stroke-width:1.6;stroke-dasharray:5 4}
+#sk2-svg .bedgehit,#sk2-svg .pedgehit{stroke:transparent;stroke-width:10;fill:none;cursor:pointer}
+#sk2-svg.dimrest .rest2 + .pedgehit{pointer-events:none}
+#sk2-svg .bnode.nopre circle,#sk2-svg .pnode.orphan circle{fill:none;stroke:var(--accent);stroke-width:1.5}
+#sk2-svg .dim circle,#sk2-svg .dim polygon,#sk2-svg .dim rect,#sk2-svg .dim text{opacity:.35}
+
 </style>
 <style>
 /* ---- app shell: front page, top bar, tabs, split viewer layout ---- */
@@ -934,13 +946,13 @@ function buildMapTab(M, ctx){
   if(window.ResizeObserver) new ResizeObserver(alignLegend).observe(svg); window.addEventListener('resize',alignLegend); setTimeout(alignLegend,0); setTimeout(alignLegend,400);
   function arcPath(a,c){ var p=posP[a], q=posP[c]; var dy=Math.abs(p.y-q.y), bulge=Math.min(30+dy*0.35,140); var xm=Math.max(xEndP[a],xEndP[c])+bulge; return 'M'+xEndP[a]+','+p.y+' C'+xm+','+p.y+' '+xm+','+q.y+' '+xEndP[c]+','+q.y; }
   var mapEls=[]; B.forEach(function(b){ (b.preimage||[]).forEach(function(k){ var a=posB[b.id], c=posP[k]; var p=el('path',{d:'M'+(a.x+12)+','+a.y+' C'+(a.x+150)+','+a.y+' '+(c.x-150)+','+c.y+' '+(c.x-12)+','+c.y,'class':'map'+((b.preimage_unsure||b.mapping==='inferred')?' unsure':'')+((HIDB[b.id]||HIDP[k])?' fhide':''),'data-b':b.id,'data-p':k}); gMap.appendChild(p); mapEls.push(p); }); });
-  var bedgeEls=[]; E.forEach(function(e,i){ var a=posB[e.source], c=posB[e.target]; var dy=Math.abs(a.y-c.y), bulge=Math.min(12+dy*0.15,45); var xm=Math.min(xStartB[e.source],xStartB[e.target])-bulge; var d='M'+xStartB[e.source]+','+a.y+' C'+xm+','+a.y+' '+xm+','+c.y+' '+xStartB[e.target]+','+c.y; var fh=(HIDB[e.source]||HIDB[e.target])?' fhide':''; var p=el('path',{d:d,'class':'bedge2'+fh,'data-e':i}); var hit=el('path',{d:d,'class':'bedgehit'+fh,'data-e':i}); gBE.appendChild(p); gBE.appendChild(hit); bedgeEls.push(p); });
+  var bedgeEls=[]; E.forEach(function(e,i){ var a=posB[e.source], c=posB[e.target]; var dy=Math.abs(a.y-c.y), bulge=Math.min(30+dy*0.35,140);   /* same curvature as the paper side */ var xm=Math.min(xStartB[e.source],xStartB[e.target])-bulge; var d='M'+xStartB[e.source]+','+a.y+' C'+xm+','+a.y+' '+xm+','+c.y+' '+xStartB[e.target]+','+c.y; var fh=(HIDB[e.source]||HIDB[e.target])?' fhide':''; var p=el('path',{d:d,'class':'bedge2'+fh,'data-e':i}); var hit=el('path',{d:d,'class':'bedgehit'+fh,'data-e':i}); gBE.appendChild(p); gBE.appendChild(hit); bedgeEls.push(p); });
   B.forEach(function(b){ var g=el('g',{'class':'bnode'+((b.preimage||[]).length?'':' nopre')+(collB[b.id]?' coll':'')+(HIDB[b.id]?' fhide':''),'data-b':b.id}); var q=posB[b.id]; g.appendChild(el('title',{},b.label+(collB[b.id]?' — stands for '+(b.preimage||[]).length+' paper metrics':''))); if(collB[b.id]) g.appendChild(el('polygon',{points:q.x+','+(q.y-7)+' '+(q.x+7)+','+q.y+' '+q.x+','+(q.y+7)+' '+(q.x-7)+','+q.y})); else g.appendChild(el('circle',{cx:q.x,cy:q.y,r:5.5})); g.appendChild(el('text',{x:q.x-10,y:q.y+4,'text-anchor':'end'},clip(decap(shortLbl(b.label))))); gB.appendChild(g); });
   QORDER.forEach(function(k){ var q=QI[k], pos=posP[k]; var g=el('g',{'class':'pnode'+(M.mapped[k]?'':' orphan')+(collP[k]?' coll':'')+(HIDP[k]?' fhide':''),'data-p':k}); g.appendChild(el('title',{},q.label+(collP[k]?' — '+M.mapped[k].length+' blog metrics map to it':''))); if(collP[k]) g.appendChild(el('polygon',{points:pos.x+','+(pos.y-7)+' '+(pos.x+7)+','+pos.y+' '+pos.x+','+(pos.y+7)+' '+(pos.x-7)+','+pos.y})); else g.appendChild(el('circle',{cx:pos.x,cy:pos.y,r:5.5})); g.appendChild(el('text',{x:pos.x+10,y:pos.y+4},clip(decap((M.LBL[k]&&M.LBL[k].indexOf('$')<0)?M.LBL[k]:shortLbl(q.label))))); gP.appendChild(g); });
   var PL={}, restSel=root.querySelector('.rest'), detail=root.querySelector('.s2-detail'); var detail0=detail.innerHTML; Object.defineProperty(restSel,'value',{get:function(){ var c=restSel.querySelector('input:checked'); return c?c.value:'mapped'; }});
   function show(x){ detail.innerHTML=x; ts(detail); }
   function drawRest(){ gRest.innerHTML=''; var mode=restSel.value; if(mode==='none') return;
-    Object.keys(PL).forEach(function(k){ var ab=k.split('|'); if(!posP[ab[0]]||!posP[ab[1]]||HIDP[ab[0]]||HIDP[ab[1]]) return; var st=M.status(k,PL); if(mode==='mapped'&&(st==='orph'||st==='abs')) return; gRest.appendChild(el('path',{d:arcPath(ab[0],ab[1]),'class':'rest2 st-'+st})); });
+    Object.keys(PL).forEach(function(k){ var ab=k.split('|'); if(!posP[ab[0]]||!posP[ab[1]]||HIDP[ab[0]]||HIDP[ab[1]]) return; var st=M.status(k,PL); if(mode==='mapped'&&(st==='orph'||st==='abs')) return; gRest.appendChild(el('path',{d:arcPath(ab[0],ab[1]),'class':'rest2 st-'+st,'data-k':k})); gRest.appendChild(el('path',{d:arcPath(ab[0],ab[1]),'class':'pedgehit','data-k':k})); });
      }
   function styleEdges(){ E.forEach(function(e,i){ var r=M.edgeRatio(i,PL); bedgeEls[i].setAttribute('class','bedge2 '+(r.grey?'g-grey':(r.linked.length===r.pairs.length?'g-full':(r.linked.length?'g-part':'g-none')))); }); }
   function lbl(k){ return M.lbl(k); }
@@ -1033,7 +1045,7 @@ function buildMapTab(M, ctx){
       '</tbody></table></div><p class="small muted">Totals: '+totP+' paper sentence-mentions and sources across '+QORDER.length+' metrics; '+totB+' blog sentence-mentions across '+B.length+' blog metrics.</p>';
     return s; }
   function clear(){ gPE.innerHTML=''; svg.classList.remove('dimrest'); mapEls.forEach(function(p){ p.classList.remove('on','off'); }); bedgeEls.forEach(function(p){ p.classList.remove('on','dim'); }); Array.prototype.forEach.call(svg.querySelectorAll('.bnode,.pnode'),function(g){ g.classList.remove('dim','sel'); }); }
-  function parc(a,c,cls){ svg.classList.add('dimrest'); if(HIDP[a]||HIDP[c]||cls==='st-ung') return; gPE.appendChild(el('path',{d:arcPath(a,c),'class':'pedge2 '+cls})); }
+  function parc(a,c,cls){ svg.classList.add('dimrest'); if(HIDP[a]||HIDP[c]||cls==='st-ung') return; gPE.appendChild(el('path',{d:arcPath(a,c),'class':'pedge2 '+cls,'data-k':key(a,c)})); gPE.appendChild(el('path',{d:arcPath(a,c),'class':'pedgehit','data-k':key(a,c)})); }
   // Lyn 2026-10-31: one rule for what a click shows. For the clicked metric's side: its links and the metrics they reach. For the other side: the
   // metrics it corresponds to, their links, and the metrics those reach. Everything else is dimmed. The same rule whichever side is clicked.
   function focus(bset, pset, side, id){ clear(); svg.classList.add('dimrest'); var bOn={}, pOn={};
@@ -1043,6 +1055,14 @@ function buildMapTab(M, ctx){
     mapEls.forEach(function(p){ var on=bset.indexOf(p.dataset.b)>=0&&pset.indexOf(p.dataset.p)>=0; p.classList.toggle('on',on); p.classList.toggle('off',!on); });
     Array.prototype.forEach.call(svg.querySelectorAll('.bnode'),function(g){ g.classList.toggle('dim',!bOn[g.dataset.b]); g.classList.toggle('sel',side==='b'&&g.dataset.b===id); });
     Array.prototype.forEach.call(svg.querySelectorAll('.pnode'),function(g){ g.classList.toggle('dim',!pOn[g.dataset.p]); g.classList.toggle('sel',side==='p'&&g.dataset.p===id); }); }
+  // Lyn 2026-10-31: a paper link is clickable like a blog link: the link, its two metrics, their blog metrics, and the blog links that stand for it
+  function selL(k){ clear(); svg.classList.add('dimrest'); var ab=k.split('|'), st=M.status(k,PL); parc(ab[0],ab[1],'st-'+st); var imgs=(M.mapped[ab[0]]||[]).concat(M.mapped[ab[1]]||[]), ed=M.IMP[k]||[];
+    Array.prototype.forEach.call(svg.querySelectorAll('.pnode'),function(g){ g.classList.toggle('dim',ab.indexOf(g.dataset.p)<0); });
+    Array.prototype.forEach.call(svg.querySelectorAll('.bnode'),function(g){ g.classList.toggle('dim',imgs.indexOf(g.dataset.b)<0); });
+    E.forEach(function(e,i){ var on=ed.indexOf(i)>=0; bedgeEls[i].classList.toggle('on',on); bedgeEls[i].classList.toggle('dim',!on); });
+    mapEls.forEach(function(p){ var on=ab.indexOf(p.dataset.p)>=0&&imgs.indexOf(p.dataset.b)>=0; p.classList.toggle('on',on); p.classList.toggle('off',!on); });
+    var names={rep:'carried: the blog states this link',unl:'dropped: the blog names both metrics but not the link',orph:'one end named in the blog',abs:'neither end named in the blog'};
+    show('<h4>'+esc(lbl(ab[0]))+' ↔ '+esc(lbl(ab[1]))+'</h4><p><b>'+esc(names[st]||st)+'.</b></p><p>'+esc(M.witness(k,PL))+'</p>'); }
   function selP(k){ clear(); Array.prototype.forEach.call(svg.querySelectorAll('.pnode'),function(g){ g.classList.toggle('dim',g.dataset.p!==k); }); svg.querySelector('.pnode[data-p="'+k+'"]').classList.add('sel');
     var imgs=M.mapped[k]||[]; mapEls.forEach(function(p){ p.classList.toggle('on',p.dataset.p===k); p.classList.toggle('off',p.dataset.p!==k); }); Array.prototype.forEach.call(svg.querySelectorAll('.bnode'),function(g){ g.classList.toggle('dim',imgs.indexOf(g.dataset.b)<0); });
     // as when a blog metric is selected: keep the blog links of the metric's blog images, dim the rest
@@ -1067,7 +1087,7 @@ function buildMapTab(M, ctx){
     var s='<h4>'+esc(BI[e.source].label)+' → '+esc(BI[e.target].label)+'</h4><p class="q">“'+esc(e.quote)+'”</p>';
     s+=r.grey?'<p>An end has no paper metric, so there is nothing to check.</p>':'<p><b>Grounding '+r.linked.length+'/'+r.pairs.length+'.</b></p><ul>'+r.pairs.map(function(k){ var ab=k.split('|'); return '<li>'+esc(lbl(ab[0])+'↔'+lbl(ab[1]))+': '+(PL[k]?'<b>linked</b> — '+esc(M.witness(k,PL)):'<b>not stated in the paper</b>')+'</li>'; }).join('')+'</ul>';
     show(s+(e.paper_counterpart?'<p class="muted">Coding note: '+esc(e.paper_counterpart)+'</p>':'')); }
-  svg.addEventListener('click',function(ev){ var t=ev.target.closest('.pnode'); if(t) return selP(t.dataset.p); var b=ev.target.closest('.bnode'); if(b) return selB(b.dataset.b); var m=ev.target.closest('.map'); if(m) return selP(m.dataset.p); var hh=ev.target.closest('.bedgehit'); if(hh) return selE(+hh.dataset.e); clear(); show(detail0); });   // Lyn 2026-10-31: a click on empty space resets the view
+  svg.addEventListener('click',function(ev){ var t=ev.target.closest('.pnode'); if(t) return selP(t.dataset.p); var b=ev.target.closest('.bnode'); if(b) return selB(b.dataset.b); var m=ev.target.closest('.map'); if(m) return selP(m.dataset.p); var hh=ev.target.closest('.bedgehit'); if(hh) return selE(+hh.dataset.e); var pl=ev.target.closest('.pedgehit'); if(pl) return selL(pl.dataset.k); clear(); show(detail0); });   // Lyn 2026-10-31: a click on empty space resets the view
   detail.addEventListener('click',function(e){ var q=e.target.closest('[data-showq]'); if(q&&ctx.showInPaper) return ctx.showInPaper(q.dataset.showq); var b=e.target.closest('[data-showb]'); if(b&&ctx.showInBlog) return ctx.showInBlog(b.dataset.showb); });
   restSel.addEventListener('change',function(){ drawRest(); });
   function refresh(){ PL=M.paperLayer(); drawRest(); styleEdges(); summary(); }
