@@ -1298,7 +1298,7 @@ function front(){ var f=h('div','front');
     PAIRS.upload={id:'upload', status:'your pair', short:'', paper:{cite:pu, url:pu}, blog:{cite:bu, url:bu}, docs:null, iframe:{paper:pu, blog:bu}}; delete VIEWS.upload; location.hash='#/p/upload/paper'; });
   return f; }
 
-function route(h){ var m=/^#\/p\/([^/]+)(?:\/(paper|blog|map))?(?:\/([^/]+))?/.exec(h||location.hash||'');   /* h: the render check passes the address directly (browsers throttle history calls) */ app.innerHTML='';
+function route(h){ var m=/^#\/p\/([^/]+)(?:\/(paper|blog|map))?(?:\/([^/]+))?/.exec((typeof h==='string'?h:location.hash)||'');   /* h: the render check passes the address directly (browsers throttle history calls) */ app.innerHTML='';
   if(m&&PAIRS[m[1]]){ var v=pairView(m[1]); app.appendChild(v.root); v.showTab(m[2]||'paper'); if(m[3]) v.select(m[2]||'paper', decodeURIComponent(m[3])); }
   else { var f=front(); app.appendChild(f); if(location.hash&&location.hash!=='#/') history.replaceState(null,'','#/'); }
   window.scrollTo({top:0}); }
