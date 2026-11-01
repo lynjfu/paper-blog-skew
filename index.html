@@ -466,7 +466,7 @@ table.gl.typo td:nth-child(n+2):nth-child(-n+6){text-align:center;white-space:no
 /* 2026-10-31: a block where a selected metric is named (name evidence), distinct from a link hit */
 .docv .blk.hit-name{border-left:3px dotted #777;background:none}   /* a name occurrence is not a source: grey dotted edge only, so the orange prose marks and blue equation blocks stay the only source colours (Lyn 2026-10-31) */
 
-.docv mark b.fn, .scol mark b.fn{font-weight:700}   /* the metrics in focus, bold inside their sources (2026-10-31) */
+.docv b.mfoc, .scol b.mfoc{font-weight:700;color:inherit;font-size:inherit}   /* the metrics in focus, bold inside their sources (2026-10-31) */
 
 /* salience table (2026-10-31): over = orange tint + ▲, under = blue tint + ▼; the mark carries the reading without colour */
 table.sal td.sk-o2{background:rgba(213,94,0,.38)}table.sal td.sk-o1{background:rgba(213,94,0,.16)}table.sal td.sk-mid{background:rgba(0,158,115,.18)}table.sal td.sk-u1{background:rgba(0,114,178,.14)}table.sal td.sk-u2{background:rgba(0,114,178,.34)}
@@ -720,8 +720,8 @@ function boldNames(html, names){ if(!names||!names.words||!names.words.length) r
   if(!rxs.length&&!srx.length) return html;
   var math=html.split(/(\$\$[\s\S]*?\$\$|\$[^$]*\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/);   // maths spans are left alone (KaTeX renders them; symbols are bolded by boldTex)
   return math.map(function(seg,i){ if(i%2) return seg;
-    var parts=seg.split(/(<[^>]+>)/); seg=parts.map(function(p,j){ if(j%2) return p; rxs.forEach(function(rx){ p=p.replace(rx,function(m0,pre,word){ return pre+'<b class="fn">'+word+'</b>'; }); }); return p; }).join('');
-    srx.forEach(function(rx){ seg=seg.replace(rx,function(m0,pre,sym){ return pre+'<b class="fn">'+sym+'</b>'; }); }); return seg; }).join(''); }
+    var parts=seg.split(/(<[^>]+>)/); seg=parts.map(function(p,j){ if(j%2) return p; rxs.forEach(function(rx){ p=p.replace(rx,function(m0,pre,word){ return pre+'<b class="mfoc">'+word+'</b>'; }); }); return p; }).join('');
+    srx.forEach(function(rx){ seg=seg.replace(rx,function(m0,pre,sym){ return pre+'<b class="mfoc">'+sym+'</b>'; }); }); return seg; }).join(''); }
 function namesOfQ(M, keys){ var words=[], tex=[]; keys.forEach(function(k){ var q=M.QI[k]; if(!q) return; (q.aliases||[]).forEach(function(a){ if(words.indexOf(a)<0) words.push(a); }); var t=M.LBL[k]; if(t&&t.indexOf('$')>=0) tex.push(t); }); return {words:words, tex:tex}; }
 function namesOfB(M, ids){ var words=[]; ids.forEach(function(id){ var b=M.BI[id]; if(!b) return; (b.mentions||[]).forEach(function(m){ if(m.matched&&words.indexOf(m.matched)<0) words.push(m.matched); }); Object.keys(b.alias_used||{}).forEach(function(k){ var w=b.alias_used[k]; if(w&&words.indexOf(w)<0) words.push(w); }); if(!words.length) words.push(b.label); }); return {words:words}; }
 function DocViewer(doc, opts){
