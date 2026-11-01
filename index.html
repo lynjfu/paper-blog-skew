@@ -648,8 +648,7 @@ function unionFind(ids, pairs, tau){ var par={}; ids.forEach(function(i){ par[i]
   Object.keys(pairs||{}).forEach(function(k){ if(pairs[k]<tau) return; var ab=k.split('|'); if(!(ab[0] in par)||!(ab[1] in par)) return; var a=f(ab[0]), b=f(ab[1]); if(a!==b){ if(ids.indexOf(a)<ids.indexOf(b)) par[b]=a; else par[a]=b; } });
   var map={}, groups={}; ids.forEach(function(i){ var r=f(i); map[i]=r; (groups[r]=groups[r]||[]).push(i); }); return {map:map, groups:groups}; }
 function uniqArr(a){ var o=[]; a.forEach(function(x){ if(o.indexOf(x)<0) o.push(x); }); return o; }
-// Lyn 2026-10-31: a joined metric is shown by its first name and how many more it holds ("Number of qubits ⊕ 11 more"); the full list is on hover
-function lumpLabel(names){ return names.length>1?names[0]+' ⊕ '+(names.length-1)+' more':names[0]; }
+function lumpLabel(names){ return names.join(' ⊕ '); }   /* Lyn 2026-10-31: back to every name joined */
 function lumpP(P, tau){ if(!(tau<1)||!P.sim||!P.Q) return P; var sim=P.sim;
   // L23 (Lyn, 2026-10-31): a formula variable is pinned by the paper's notation, not by wording, so a symbol metric never lumps
   var pinned={}; P.Q.forEach(function(q){ if(q.kind==='symbol') pinned[q.key]=1; }); var simP={}; Object.keys(sim.paper||{}).forEach(function(k){ var ab=k.split('|'); if(!pinned[ab[0]]&&!pinned[ab[1]]) simP[k]=sim.paper[k]; });
